@@ -6,10 +6,12 @@ import { EyeOff, User, Award } from 'lucide-react';
 export interface Issue {
   id: string;
   title: string;
+  description: string;
   repo: string;
   author: string;
   points: number;
-  status: 'closed' | 'open';
+  reward: number;
+  status: 'closed' | 'open' | 'processing' | 'paid' | 'merged';
   labels: string[];
 }
 
