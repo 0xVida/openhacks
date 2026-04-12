@@ -59,7 +59,6 @@ export default function MaintainerSetupPage() {
     // Simulate GitHub App installation redirect/success
     setTimeout(() => {
       setIsInstalling(false);
-      setIsInstalled(true);
       setStep(3);
     }, 2000);
   };
