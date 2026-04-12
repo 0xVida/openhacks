@@ -54,18 +54,47 @@ export async function sendPayment(toAddress: string, amount: number, memo: strin
 /**
  * Send USDC to an email (Escrow).
  */
-export async function sendEscrow(email: string, amount: number, memo: string): Promise<LocusResponse<PayoutData>> {
-  const response = await fetch(`${LOCUS_API_BASE}/pay/send-email`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOCUS_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email,
-      amount,
-      memo,
-    }),
-  });
-  return response.json();
+  try {
+    if (!LOCUS_API_KEY) {
+      console.error('LOCUS_API_KEY is missing from environment variables');
+      return { success: false, error: 'Configuration Error', message: 'Locus API Key is not set' };
+    }
+
+    const response = await fetch(`${LOCUS_API_BASE}/pay/send-email`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOCUS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        amount,
+        memo,
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Locus API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data
+      });
+      return { 
+        success: false, 
+        error: data.error || 'API_ERROR', 
+        message: data.message || `Locus API responded with status ${response.status}` 
+      };
+    }
+
+    return { success: true, data };
+  } catch (error: any) {
+    console.error('Locus sendEscrow Exception:', error);
+    return { 
+      success: false, 
+      error: 'NETWORK_ERROR', 
+      message: error.message || 'Failed to connect to Locus API' 
+    };
+  }
 }

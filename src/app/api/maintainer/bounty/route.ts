@@ -25,9 +25,13 @@ export async function POST(request: Request) {
     const locusResponse = await sendEscrow(escrowTarget, reward, memo);
 
     if (!locusResponse.success) {
-      console.error('Locus escrow failed:', locusResponse.error);
+      console.error('Locus escrow failed:', locusResponse.message);
       return NextResponse.json(
-        { success: false, error: 'Payment escrow failed', message: locusResponse.message },
+        { 
+          success: false, 
+          error: 'Payment escrow failed', 
+          message: locusResponse.message || 'The Locus API could not process the escrow. Check your balance and API key.' 
+        },
         { status: 500 }
       );
     }

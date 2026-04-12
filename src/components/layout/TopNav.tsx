@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useRole } from '@/components/providers/role-context';
+import { BalanceDisplay } from '@/components/ui/BalanceDisplay';
 import { 
   Search, 
   Bell, 
@@ -76,6 +77,8 @@ export default function TopNav() {
             <Bell size={20} />
             <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-accent rounded-full border-2 border-surface-low"></span>
           </button>
+          
+          {role === 'maintainer' && <BalanceDisplay />}
           
           <ThemeToggle />
           
