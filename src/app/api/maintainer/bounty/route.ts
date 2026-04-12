@@ -5,9 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: Request) {
   try {
-    const { title, repo, issueNumber, reward, contributorEmail } = await request.json();
+    const { title, description, repo, issueNumber, reward, contributorEmail } = await request.json();
 
-    if (!title || !repo || !issueNumber || !reward) {
+    if (!title || !description || !repo || !issueNumber || !reward) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     const newBounty: Bounty = {
       id: uuidv4(),
       title,
+      description,
       repo,
       issueNumber: parseInt(issueNumber, 10),
       reward: parseFloat(reward),

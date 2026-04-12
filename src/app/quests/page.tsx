@@ -144,11 +144,16 @@ const QuestCard = ({ quest }: { quest: Quest }) => {
       </div>
 
       <div className="space-y-4">
-         <div>
+          <div>
             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{quest.project}</p>
-            <h3 className="text-xl font-black text-foreground group-hover:text-accent transition-colors leading-tight uppercase tracking-tight">
+            <h3 className="text-xl font-black text-foreground group-hover:text-accent transition-colors leading-tight uppercase tracking-tight mb-2">
                {quest.title}
             </h3>
+            {quest.description && (
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed font-medium">
+                {quest.description}
+              </p>
+            )}
          </div>
          
          <div className="flex items-center justify-between pt-6 border-t border-border-subtle">

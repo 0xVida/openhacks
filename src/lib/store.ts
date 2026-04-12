@@ -4,6 +4,7 @@ import path from 'path';
 export interface Bounty {
   id: string;
   title: string;
+  description: string;
   repo: string; // owner/repo
   issueNumber: number;
   reward: number;

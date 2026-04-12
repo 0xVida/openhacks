@@ -16,8 +16,10 @@ import {
   ChevronRight,
   Globe,
   Settings2,
-  Loader2
+  Loader2,
+  Search
 } from 'lucide-react';
+import { useRole } from '@/components/providers/role-context';
 import RootContainer from '@/components/layout/RootContainer';
 
 type BountyType = 'issue';
@@ -25,18 +27,73 @@ type ExecutionMode = 'open' | 'proposal';
 
 export default function CreateBountyPage() {
   const router = useRouter();
+  const { githubUser, selectedRepo: contextRepo } = useRole();
   const [type, setType] = useState<BountyType>('issue');
   const [mode, setMode] = useState<ExecutionMode>('proposal');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [isFetchingIssues, setIsFetchingIssues] = useState(false);
+
+  // Repos & Issues State
+  const [repos, setRepos] = useState<any[]>([]);
+  const [issues, setIssues] = useState<any[]>([]);
+  const [searchIssue, setSearchIssue] = useState('');
+  const [showIssuePicker, setShowIssuePicker] = useState(false);
+
   // Form State
   const [title, setTitle] = useState('');
-  const [repo, setRepo] = useState('openhacks-core');
+  const [description, setDescription] = useState('');
+  const [repo, setRepo] = useState(contextRepo || '');
   const [issueNumber, setIssueNumber] = useState('');
   const [reward, setReward] = useState('');
 
+  // Fetch Repos on mount
+  React.useEffect(() => {
+    async function fetchRepos() {
+      try {
+        const response = await fetch('/api/github/repos');
+        const data = await response.json();
+        if (data.repos) {
+          setRepos(data.repos);
+          if (!repo && data.repos.length > 0) {
+            setRepo(data.repos[0].full_name);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching repos:', e);
+      }
+    }
+    fetchRepos();
+  }, []);
+
+  // Fetch Issues when repo changes
+  React.useEffect(() => {
+    if (!repo) return;
+    async function fetchIssues() {
+      setIsFetchingIssues(true);
+      try {
+        const response = await fetch(`/api/github/issues?repo=${repo}`);
+        const data = await response.json();
+        if (data.issues) {
+          setIssues(data.issues);
+        }
+      } catch (e) {
+        console.error('Error fetching issues:', e);
+      } finally {
+        setIsFetchingIssues(false);
+      }
+    }
+    fetchIssues();
+  }, [repo]);
+
+  const handleSelectIssue = (issue: any) => {
+    setTitle(issue.title);
+    setDescription(issue.body);
+    setIssueNumber(issue.number.toString());
+    setShowIssuePicker(false);
+  };
+
   const handleLaunchBounty = async () => {
-    if (!title || !repo || !issueNumber || !reward) {
+    if (!title || !description || !repo || !issueNumber || !reward) {
       alert('Please fill in all required fields.');
       return;
     }
@@ -50,6 +107,7 @@ export default function CreateBountyPage() {
         },
         body: JSON.stringify({
           title,
+          description,
           repo,
           issueNumber,
           reward: parseFloat(reward),
@@ -86,7 +144,93 @@ export default function CreateBountyPage() {
             <p className="text-muted-foreground font-medium text-lg">Define how you want contributors to help your project.</p>
           </header>
 
-          <div className="space-y-12">
+          <div className="space-y-12 pb-24">
+            <section>
+               <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Select Project</h2>
+               <div className="bg-surface-mid border border-border-subtle rounded-3xl p-8 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                       <label className="text-xs font-black text-foreground uppercase tracking-widest block">Repository</label>
+                       <div className="relative group">
+                          <Code2 className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-accent transition-colors" size={20} />
+                          <select 
+                            disabled={isLoading}
+                            value={repo}
+                            onChange={(e) => setRepo(e.target.value)}
+                            className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 pl-12 pr-4 text-foreground focus:outline-none focus:border-accent/50 appearance-none font-bold"
+                          >
+                             {repos.map(r => (
+                               <option key={r.full_name} value={r.full_name}>{r.full_name}</option>
+                             ))}
+                          </select>
+                       </div>
+                    </div>
+                    <div className="flex flex-col justify-end">
+                       <button 
+                        onClick={() => setShowIssuePicker(!showIssuePicker)}
+                        className="w-full h-[60px] bg-accent/10 border border-accent/20 rounded-2xl flex items-center justify-center gap-2 font-black text-accent uppercase tracking-widest text-xs hover:bg-accent/20 transition-all active:scale-[0.98]"
+                       >
+                          <Zap size={16} />
+                          GRAB ISSUES FROM REPO
+                       </button>
+                    </div>
+                  </div>
+               </div>
+            </section>
+
+            {showIssuePicker && (
+              <section className="animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em]">Live GitHub Issues</h2>
+                  <div className="relative flex-1 max-w-xs ml-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
+                    <input 
+                      type="text" 
+                      placeholder="Filter issues..."
+                      value={searchIssue}
+                      onChange={(e) => setSearchIssue(e.target.value)}
+                      className="w-full bg-surface-mid border border-border-subtle rounded-xl py-2 pl-9 pr-3 text-xs focus:outline-none focus:border-accent/40"
+                    />
+                  </div>
+                </div>
+                
+                <div className="bg-surface-mid border border-border-subtle rounded-[2rem] overflow-hidden">
+                  <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
+                    {isFetchingIssues ? (
+                      <div className="flex flex-col items-center justify-center py-12 opacity-50">
+                        <Loader2 className="animate-spin text-accent mb-2" size={32} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Scanning Repository...</span>
+                      </div>
+                    ) : issues.length === 0 ? (
+                      <div className="py-12 text-center text-muted-foreground font-medium text-sm italic">
+                        No open issues found in this repository.
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border-subtle/50">
+                        {issues.filter(i => i.title.toLowerCase().includes(searchIssue.toLowerCase())).map(issue => (
+                          <button 
+                            key={issue.id}
+                            onClick={() => handleSelectIssue(issue)}
+                            className="w-full p-6 hover:bg-surface-high transition-colors flex items-start gap-4 text-left group"
+                          >
+                            <span className="text-accent font-black text-xs shrink-0 mt-0.5">#{issue.number}</span>
+                            <div className="flex-1">
+                              <h3 className="font-black text-foreground uppercase tracking-tight text-sm mb-1 group-hover:text-accent transition-colors">{issue.title}</h3>
+                              <div className="flex flex-wrap gap-2">
+                                {issue.labels.map((l: string) => (
+                                  <span key={l} className="text-[8px] font-black tracking-widest uppercase px-2 py-0.5 rounded-md bg-surface-high border border-border-subtle text-muted-foreground">{l}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className="text-muted-foreground mt-1 group-hover:translate-x-1 transition-transform" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
 
             <section>
                <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Bounty Details</h2>
@@ -103,22 +247,19 @@ export default function CreateBountyPage() {
                      />
                   </div>
 
+                  <div className="space-y-4">
+                     <label className="text-xs font-black text-foreground uppercase tracking-widest block">Detailed Description</label>
+                     <textarea 
+                       disabled={isLoading}
+                       rows={6}
+                       value={description}
+                       onChange={(e) => setDescription(e.target.value)}
+                       placeholder="Describe the scope of work, technical requirements, and acceptance criteria..." 
+                       className="w-full bg-surface-high border border-border-subtle rounded-3xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-medium placeholder:opacity-30 scrollbar-hide text-sm"
+                     />
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                       <label className="text-xs font-black text-foreground uppercase tracking-widest block">Repository</label>
-                       <div className="relative group">
-                          <Code2 className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-accent transition-colors" size={20} />
-                          <select 
-                            disabled={isLoading}
-                            value={repo}
-                            onChange={(e) => setRepo(e.target.value)}
-                            className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 pl-12 pr-4 text-foreground focus:outline-none focus:border-accent/50 appearance-none font-bold"
-                          >
-                             <option value="openhacks-core">openhacks-core</option>
-                             <option value="openhacks-ui">openhacks-ui</option>
-                          </select>
-                       </div>
-                    </div>
                     <div className="space-y-4">
                        <label className="text-xs font-black text-foreground uppercase tracking-widest block">Issue Number</label>
                        <input 
