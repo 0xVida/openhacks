@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, 
   Plus, 
@@ -14,16 +15,62 @@ import {
   Info,
   ChevronRight,
   Globe,
-  Settings2
+  Settings2,
+  Loader2
 } from 'lucide-react';
 import RootContainer from '@/components/layout/RootContainer';
 
-type BountyType = 'issue' | 'quest';
+type BountyType = 'issue';
 type ExecutionMode = 'open' | 'proposal';
 
 export default function CreateBountyPage() {
+  const router = useRouter();
   const [type, setType] = useState<BountyType>('issue');
   const [mode, setMode] = useState<ExecutionMode>('proposal');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Form State
+  const [title, setTitle] = useState('');
+  const [repo, setRepo] = useState('openhacks-core');
+  const [issueNumber, setIssueNumber] = useState('');
+  const [reward, setReward] = useState('');
+
+  const handleLaunchBounty = async () => {
+    if (!title || !repo || !issueNumber || !reward) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/maintainer/bounty', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title,
+          repo,
+          issueNumber,
+          reward: parseFloat(reward),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Bounty launched successfully! Funds are now locked in escrow.');
+        router.push('/quests');
+      } else {
+        alert(`Failed to launch bounty: ${result.error || result.message}`);
+      }
+    } catch (error) {
+      console.error('Error launching bounty:', error);
+      alert('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <RootContainer>
@@ -40,81 +87,62 @@ export default function CreateBountyPage() {
           </header>
 
           <div className="space-y-12">
-            <section>
-              <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Step 1: Selection</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button 
-                  onClick={() => setType('issue')}
-                  className={`p-6 rounded-3xl border transition-all text-left group relative overflow-hidden ${
-                    type === 'issue' 
-                      ? 'bg-accent/5 border-accent shadow-xl shadow-accent/5' 
-                      : 'bg-surface-mid border-border-subtle hover:border-accent/40'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all ${
-                    type === 'issue' ? 'bg-accent text-white' : 'bg-surface-high text-muted-foreground group-hover:text-accent'
-                  }`}>
-                    <Code2 size={24} />
-                  </div>
-                  <h3 className="font-black text-foreground text-xl uppercase tracking-tight mb-2">Technical Issue</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Fix bugs or build features from your GitHub repository.</p>
-                </button>
-
-                <button 
-                  onClick={() => setType('quest')}
-                  className={`p-6 rounded-3xl border transition-all text-left group relative overflow-hidden ${
-                    type === 'quest' 
-                      ? 'bg-accent/5 border-accent shadow-xl shadow-accent/5' 
-                      : 'bg-surface-mid border-border-subtle hover:border-accent/40'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all ${
-                    type === 'quest' ? 'bg-accent text-white' : 'bg-surface-high text-muted-foreground group-hover:text-accent'
-                  }`}>
-                    <Video size={24} />
-                  </div>
-                  <h3 className="font-black text-foreground text-xl uppercase tracking-tight mb-2">Creative Quest</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">Market your project through videos, design, or social content.</p>
-                </button>
-              </div>
-            </section>
 
             <section>
-               <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Step 2: Details</h2>
+               <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Bounty Details</h2>
                <div className="bg-surface-mid border border-border-subtle rounded-3xl p-8 space-y-6">
-                  {type === 'issue' ? (
+                  <div className="space-y-4">
+                     <label className="text-xs font-black text-foreground uppercase tracking-widest block">Bounty Title</label>
+                     <input 
+                       disabled={isLoading}
+                       type="text" 
+                       value={title}
+                       onChange={(e) => setTitle(e.target.value)}
+                       placeholder="e.g. Implement Locus payment hook..." 
+                       className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-bold placeholder:opacity-30"
+                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                       <label className="text-xs font-black text-foreground uppercase tracking-widest block">Select Repository</label>
+                       <label className="text-xs font-black text-foreground uppercase tracking-widest block">Repository</label>
                        <div className="relative group">
                           <Code2 className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-accent transition-colors" size={20} />
-                          <select className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 pl-12 pr-4 text-foreground focus:outline-none focus:border-accent/50 appearance-none font-bold">
-                             <option>openbags-core / main</option>
-                             <option>openbags-ui / master</option>
+                          <select 
+                            disabled={isLoading}
+                            value={repo}
+                            onChange={(e) => setRepo(e.target.value)}
+                            className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 pl-12 pr-4 text-foreground focus:outline-none focus:border-accent/50 appearance-none font-bold"
+                          >
+                             <option value="openhacks-core">openhacks-core</option>
+                             <option value="openhacks-ui">openhacks-ui</option>
                           </select>
                        </div>
-                       <p className="text-[10px] text-muted-foreground font-bold italic px-2">Showing repos you have maintainer access to.</p>
                     </div>
-                  ) : (
                     <div className="space-y-4">
-                       <label className="text-xs font-black text-foreground uppercase tracking-widest block">Quest Objective</label>
+                       <label className="text-xs font-black text-foreground uppercase tracking-widest block">Issue Number</label>
                        <input 
-                         type="text" 
-                         placeholder="e.g. Create a 60s explainer video for our DAO..." 
-                         className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-bold placeholder:opacity-30"
+                         disabled={isLoading}
+                         type="number" 
+                         value={issueNumber}
+                         onChange={(e) => setIssueNumber(e.target.value)}
+                         placeholder="#123" 
+                         className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-bold"
                        />
                     </div>
-                  )}
+                  </div>
                </div>
             </section>
 
             <section>
-               <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Step 3: Workflow Mode</h2>
+               <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Workflow Mode</h2>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <div className="bg-surface-mid border border-border-subtle rounded-3xl p-6 flex flex-col gap-4">
                        <label className="text-xs font-black text-foreground uppercase tracking-widest">Execution Style</label>
                        <div className="flex bg-surface-high p-1 rounded-2xl border border-border-subtle">
                           <button 
+                            disabled={isLoading}
                             onClick={() => setMode('proposal')}
                             className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-tight transition-all flex items-center justify-center gap-2 ${
                               mode === 'proposal' ? 'bg-accent text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
@@ -124,6 +152,7 @@ export default function CreateBountyPage() {
                             Proposal
                           </button>
                           <button 
+                            disabled={isLoading}
                             onClick={() => setMode('open')}
                             className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-tight transition-all flex items-center justify-center gap-2 ${
                               mode === 'open' ? 'bg-accent text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
@@ -144,12 +173,15 @@ export default function CreateBountyPage() {
 
                   <div className="space-y-4">
                     <div className="bg-surface-mid border border-border-subtle rounded-3xl p-6 flex flex-col gap-4">
-                       <label className="text-xs font-black text-foreground uppercase tracking-widest">Reward Pool</label>
+                       <label className="text-xs font-black text-foreground uppercase tracking-widest">Reward Pool (USDC)</label>
                        <div className="relative group">
                           <Trophy className="absolute left-6 top-1/2 -translate-y-1/2 text-accent" size={24} />
                           <input 
+                            disabled={isLoading}
                             type="number" 
-                            placeholder="Points" 
+                            value={reward}
+                            onChange={(e) => setReward(e.target.value)}
+                            placeholder="Amount" 
                             className="w-full bg-surface-high border-2 border-accent/20 rounded-2xl py-6 pl-16 pr-6 text-2xl font-black text-foreground focus:outline-none focus:border-accent shadow-inner transition-all placeholder:text-muted-foreground/30"
                           />
                        </div>
@@ -159,11 +191,22 @@ export default function CreateBountyPage() {
             </section>
 
             <div className="pt-12 border-t border-border-subtle flex flex-col sm:flex-row gap-4">
-               <button className="flex-[2] py-5 bg-accent hover:bg-accent-hover text-white rounded-3xl font-black transition-all shadow-2xl shadow-accent/30 tracking-tight flex items-center justify-center gap-3 active:scale-[0.98]">
-                  <Zap size={22} fill="currentColor" />
-                  LAUNCH BOUNTY
+               <button 
+                disabled={isLoading}
+                onClick={handleLaunchBounty}
+                className={`flex-[2] py-5 bg-accent hover:bg-accent-hover text-white rounded-3xl font-black transition-all shadow-2xl shadow-accent/30 tracking-tight flex items-center justify-center gap-3 active:scale-[0.98] ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+               >
+                  {isLoading ? (
+                    <Loader2 size={22} className="animate-spin" />
+                  ) : (
+                    <Zap size={22} fill="currentColor" />
+                  )}
+                  {isLoading ? 'LAUNCHING...' : 'LAUNCH BOUNTY'}
                </button>
-               <button className="flex-1 py-5 bg-surface-mid hover:bg-surface-high border border-border-subtle text-foreground rounded-3xl font-black transition-all tracking-tight flex items-center justify-center gap-2">
+               <button 
+                disabled={isLoading}
+                className="flex-1 py-5 bg-surface-mid hover:bg-surface-high border border-border-subtle text-foreground rounded-3xl font-black transition-all tracking-tight flex items-center justify-center gap-2"
+               >
                   <Settings2 size={18} />
                   SAVE DRAFT
                </button>

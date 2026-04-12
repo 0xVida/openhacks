@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Plus, 
   Search, 
@@ -13,7 +13,8 @@ import {
   Trophy,
   ArrowRight,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { useRole } from '@/components/providers/role-context';
 import Link from 'next/link';
@@ -21,22 +22,52 @@ import Link from 'next/link';
 interface Quest {
   id: string;
   title: string;
-  category: 'code' | 'creative' | 'design';
+  category: 'code';
   reward: number;
   mode: 'open' | 'proposal';
   project: string;
   time: string;
 }
 
-const MOCK_QUESTS: Quest[] = [
-  { id: 'q1', title: 'Create a 60s Cinematic Explainer for Soroban-rs', category: 'creative', reward: 1200, mode: 'proposal', project: 'Stellar Foundation', time: '2d left' },
-  { id: 'q2', title: 'Design a sleek Dark Mode icon set for OpenBags', category: 'design', reward: 800, mode: 'open', project: 'OpenBags', time: '4h left' },
-  { id: 'q3', title: 'Optimizing high-concurrency storage layer in Go', category: 'code', reward: 2500, mode: 'proposal', project: 'Indexer-Node', time: '5d left' },
-  { id: 'q4', title: 'Write an deep-dive article on Soroban smart contract security', category: 'creative', reward: 500, mode: 'open', project: 'Stellar University', time: '12h left' },
-];
+const MOCK_QUESTS: Quest[] = []; // Only live bounties from GitHub will be shown
 
 export default function QuestsPage() {
   const { role } = useRole();
+  const [bounties, setBounties] = useState<Quest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBounties() {
+      try {
+        const response = await fetch('/api/bounties');
+        const result = await response.json();
+        
+        if (result.success) {
+          // Transform store format to Quest format
+          const liveQuests: Quest[] = result.data.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            category: 'code', // Default to code for GitHub issues
+            reward: b.reward,
+            mode: 'open',
+            project: b.repo.split('/')[1] || b.repo,
+            time: 'Just launched'
+          }));
+          
+          setBounties([...liveQuests, ...MOCK_QUESTS]);
+        } else {
+          setBounties(MOCK_QUESTS);
+        }
+      } catch (error) {
+        console.error('Error fetching bounties:', error);
+        setBounties(MOCK_QUESTS);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchBounties();
+  }, []);
 
   return (
     <div className="flex-1 bg-surface-low overflow-y-auto">
@@ -74,11 +105,17 @@ export default function QuestsPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-           {MOCK_QUESTS.map(quest => (
-             <QuestCard key={quest.id} quest={quest} />
-           ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={48} className="animate-spin text-accent" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+             {bounties.map(quest => (
+               <QuestCard key={quest.id} quest={quest} />
+             ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -87,8 +124,6 @@ export default function QuestsPage() {
 const QuestCard = ({ quest }: { quest: Quest }) => {
   const IconMap = {
     code: <Code2 size={32} />,
-    creative: <Video size={32} />,
-    design: <Palette size={32} />
   };
 
   return (
@@ -96,7 +131,7 @@ const QuestCard = ({ quest }: { quest: Quest }) => {
       <div className="absolute top-0 right-0 p-6 flex flex-col items-end gap-2">
          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent font-black text-[10px] uppercase tracking-widest">
             <Trophy size={11} />
-            {quest.reward} Pts
+            {quest.reward} USDC
          </div>
          <div className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.1em] ${quest.mode === 'open' ? 'text-green-500' : 'text-orange-500'}`}>
             {quest.mode === 'open' ? <Zap size={10} /> : <UserCheck size={10} />}

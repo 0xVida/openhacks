@@ -78,7 +78,6 @@ export default function Sidebar() {
         
         {role === 'contributor' ? (
           <>
-            <SidebarItem icon={<Flag size={24} strokeWidth={1.8} />} label="Quests" href="/quests" />
             <SidebarItem icon={<Calendar size={24} strokeWidth={1.8} />} label="My Tasks" href="/timeline" />
           </>
         ) : (

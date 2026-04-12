@@ -14,25 +14,25 @@ const MOCK_ISSUES: Issue[] = [
     author: 'IfeDev1',
     points: 200,
     status: 'closed',
-    labels: ['Rust', 'REPL']
+    labels: ['Rust', 'Debugger']
   },
   {
     id: '742',
-    title: 'error_db: unknown error codes print to stdout via display_error instead of logging',
+    title: 'error_db: unknown error codes print to stdout instead of logging',
     repo: 'soroban-debugger',
     author: 'IfeDev1',
     points: 150,
     status: 'closed',
-    labels: ['Bug']
+    labels: ['Bug', 'Refactor']
   },
   {
     id: '414',
-    title: '[FE] #401 - Bet Confirmation Modal with Pre-Submit Summary',
-    repo: 'Stellar-PolyMarket',
+    title: 'Bet Confirmation Modal with Pre-Submit Summary',
+    repo: 'stellar-polymarket',
     author: 'Hahfyeex',
     points: 200,
     status: 'closed',
-    labels: ['UI/UX']
+    labels: ['UI/UX', 'React']
   }
 ];
 
@@ -40,7 +40,7 @@ const MOCK_MAINTAINER_BOUNTIES: Issue[] = [
   {
     id: '101',
     title: 'Optimizing data structures for scale',
-    repo: 'openbags-core',
+    repo: 'openhacks-core',
     author: 'Admin',
     points: 1000,
     status: 'open',
@@ -49,11 +49,11 @@ const MOCK_MAINTAINER_BOUNTIES: Issue[] = [
   {
     id: '102',
     title: 'Implement Dark Mode transition micro-animations',
-    repo: 'openbags-ui',
+    repo: 'openhacks-ui',
     author: 'Admin',
     points: 300,
     status: 'open',
-    labels: ['Design', 'Animation']
+    labels: ['UI', 'Animation']
   }
 ];
 

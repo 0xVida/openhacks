@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import { useRole } from '@/components/providers/role-context';
 import { 
@@ -22,10 +23,11 @@ import {
   BriefcaseBusiness,
   Calendar
 } from 'lucide-react';
+import Github from '@/components/ui/GithubIcon';
 
 export default function TopNav() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const { role, setRole } = useRole();
+  const { role, setRole, githubUser } = useRole();
 
   return (
     <nav className="h-16 border-b border-border-subtle bg-surface-low/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
@@ -112,6 +114,27 @@ export default function TopNav() {
               <Crown size={18} strokeWidth={2.5} />
             </button>
           </div>
+
+          {!githubUser && role === 'maintainer' && (
+            <Link 
+              href="/onboarding"
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-xl font-black text-xs transition-all hover:scale-105 active:scale-95 ml-2"
+            >
+              <Github size={14} />
+              CONNECT GITHUB
+            </Link>
+          )}
+
+          {githubUser && (
+            <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-border-subtle">
+               <div className="w-8 h-8 rounded-lg overflow-hidden border border-accent/20">
+                  <img src={githubUser.avatar_url} alt={githubUser.login} className="w-full h-full object-cover" />
+               </div>
+               <span className="text-[10px] font-black uppercase tracking-widest text-foreground hidden lg:block">
+                  {githubUser.login}
+               </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -140,7 +163,6 @@ export default function TopNav() {
             <MobileMenuItem icon={<Boxes size={18} />} label="Projects" href="/projects" onClick={() => setIsMenuOpen(false)} />
             {role === 'contributor' ? (
               <>
-                <MobileMenuItem icon={<Flag size={18} />} label="Quests" href="/quests" onClick={() => setIsMenuOpen(false)} />
                 <MobileMenuItem icon={<Calendar size={18} />} label="My Tasks" href="/timeline" onClick={() => setIsMenuOpen(false)} />
               </>
             ) : (
