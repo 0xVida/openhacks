@@ -1,25 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { ArrowRight, ShieldCheck, Zap, Globe } from 'lucide-react';
 import Github from '@/components/ui/GithubIcon';
-import { useRole } from '@/components/providers/role-context';
 import RootContainer from '@/components/layout/RootContainer';
 
 export default function OnboardingPage() {
-  const router = useRouter();
-  const { setGithubUser, setRole } = useRole();
-
   const handleGithubLogin = () => {
-    // Mock GitHub Login
-    setGithubUser({
-      login: 'octocat',
-      name: 'The Octocat',
-      avatar_url: 'https://avatars.githubusercontent.com/u/583231?v=4'
-    });
-    setRole('maintainer');
-    router.push('/maintainer/setup');
+    signIn('github', { callbackUrl: '/maintainer/setup' });
   };
 
   return (

@@ -18,24 +18,36 @@ import {
 import { useRole } from '@/components/providers/role-context';
 import RootContainer from '@/components/layout/RootContainer';
 
-const MOCK_REPOS = [
-  'openhacks-core',
-  'stellar-sdk-js',
-  'soroban-react-hooks',
-  'locus-payments',
-  'web3-dashboard-ui',
-  'contract-standard-v1'
-];
-
 export default function MaintainerSetupPage() {
   const router = useRouter();
   const { githubUser, selectedRepo, setSelectedRepo } = useRole();
   const [step, setStep] = useState(1);
   const [search, setSearch] = useState('');
   const [isInstalling, setIsInstalling] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [realRepos, setRealRepos] = useState<any[]>([]);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(true);
 
-  const filteredRepos = MOCK_REPOS.filter(r => r.toLowerCase().includes(search.toLowerCase()));
+  React.useEffect(() => {
+    async function fetchRepos() {
+      try {
+        const response = await fetch('/api/github/repos');
+        const data = await response.json();
+        if (data.repos) {
+          setRealRepos(data.repos);
+        }
+      } catch (error) {
+        console.error('Error fetching repos:', error);
+      } finally {
+        setIsLoadingRepos(false);
+      }
+    }
+    fetchRepos();
+  }, []);
+
+  const filteredRepos = realRepos.filter(r => 
+    r.name.toLowerCase().includes(search.toLowerCase()) || 
+    r.full_name.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleSelectRepo = (repo: string) => {
     setSelectedRepo(repo);
@@ -101,17 +113,25 @@ export default function MaintainerSetupPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3">
-                {filteredRepos.map(repo => (
+                {isLoadingRepos ? (
+                  <div className="flex flex-col items-center justify-center py-20 opacity-50">
+                    <Loader2 size={40} className="animate-spin text-accent mb-4" />
+                    <p className="text-xs font-black uppercase tracking-widest">Fetching Repositories...</p>
+                  </div>
+                ) : filteredRepos.map(repo => (
                   <button 
-                    key={repo}
-                    onClick={() => handleSelectRepo(repo)}
-                    className="flex items-center justify-between p-5 bg-surface-high border border-border-subtle rounded-3xl hover:border-accent/40 transition-all group"
+                    key={repo.full_name}
+                    onClick={() => handleSelectRepo(repo.full_name)}
+                    className="flex items-center justify-between p-5 bg-surface-high border border-border-subtle rounded-3xl hover:border-accent/40 transition-all group text-left"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-surface-mid flex items-center justify-center text-muted-foreground group-hover:text-accent transition-colors">
                         <GitBranch size={20} />
                       </div>
-                      <span className="font-black text-foreground uppercase tracking-tight">{repo}</span>
+                      <div>
+                        <span className="font-black text-foreground uppercase tracking-tight block">{repo.name}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{repo.full_name}</span>
+                      </div>
                     </div>
                     <Plus size={20} className="text-muted-foreground group-hover:text-accent transition-colors" />
                   </button>

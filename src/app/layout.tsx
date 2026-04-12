@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { SidebarProvider } from '@/components/providers/sidebar-context';
 import { RoleProvider } from '@/components/providers/role-context';
+import { AuthProvider } from '@/components/providers/auth-provider';
 import RootContainer from '@/components/layout/RootContainer';
 import Sidebar from '@/components/layout/Sidebar';
 import TopNav from '@/components/layout/TopNav';
@@ -36,17 +37,19 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <RoleProvider>
-            <SidebarProvider>
-              <div className="flex h-screen bg-background text-foreground overflow-hidden relative">
-                 <Sidebar />
-                 <RootContainer>
-                    <TopNav />
-                    {children}
-                 </RootContainer>
-              </div>
-            </SidebarProvider>
-          </RoleProvider>
+          <AuthProvider>
+            <RoleProvider>
+              <SidebarProvider>
+                <div className="flex h-screen bg-background text-foreground overflow-hidden relative">
+                   <Sidebar />
+                   <RootContainer>
+                      <TopNav />
+                      {children}
+                   </RootContainer>
+                </div>
+              </SidebarProvider>
+            </RoleProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

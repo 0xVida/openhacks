@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 type Role = 'contributor' | 'maintainer';
 
@@ -22,12 +23,25 @@ interface RoleContextType {
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
   const [role, setRole] = useState<Role>('contributor');
   const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
 
-  // Auto-login for maintainer demo purposes if you want, but better to keep it manual per plan
-  
+  // Sync with Auth.js session
+  useEffect(() => {
+    if (session?.user) {
+      setGithubUser({
+        login: (session.user as any).login || session.user.name || 'user',
+        name: session.user.name || '',
+        avatar_url: session.user.image || ''
+      });
+      setRole('maintainer'); // Default to maintainer if logged in for this flow
+    } else {
+      setGithubUser(null);
+    }
+  }, [session]);
+
   return (
     <RoleContext.Provider value={{ 
       role, 
