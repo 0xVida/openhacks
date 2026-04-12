@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface-low: var(--surface-low);
+  --color-surface-mid: var(--surface-mid);
+  --color-surface-high: var(--surface-high);
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-hover: var(--border-hover);
+  --color-muted-foreground: var(--muted-foreground);
+  
+  --font-sans: "Inter", var(--font-geist-sans);
+}
+
+:root {
+  --background: #fdfdfd;
+  --foreground: #111111;
+  --surface-low: #ffffff;
+  --surface-mid: #f9f9f9;
+  --surface-high: #f3f3f3;
+  --border-subtle: #00000008;
+  --border-hover: #00000012;
+  --sidebar-accent: #6366f1;
+  --muted-foreground: #666666;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #050505;
+    --foreground: #fafafa;
+    --surface-low: #0a0a0a;
+    --surface-mid: #121212;
+    --surface-high: #1a1a1a;
+    --border-subtle: #ffffff10;
+    --border-hover: #ffffff20;
+    --sidebar-accent: #818cf8;
+    --muted-foreground: #a3a3a3; /* Bright zinc for dark mode */
+  }
+}
+
+/* Explicit dark class support */
+.dark {
+  --background: #050505;
+  --foreground: #fafafa;
+  --surface-low: #0a0a0a;
+  --surface-mid: #121212;
+  --surface-high: #1a1a1a;
+  --border-subtle: #ffffff10;
+  --border-hover: #ffffff20;
+  --sidebar-accent: #818cf8;
+  --muted-foreground: #a3a3a3;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6366f140;
+}
+
+.border-sleek {
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.border-sleek::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #6366f1;
+  transition: width 0.3s ease;
+}
+
+.border-sleek:hover::after {
+  width: 100%;
+}
+
+.glass {
+  background: rgba(var(--foreground), 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.content-blur {
+  filter: blur(4px);
+  transition: filter 0.3s ease;
+  pointer-events: none;
+}
+
+.content-normal {
+  filter: blur(0);
+  transition: filter 0.3s ease;
+}

@@ -1,0 +1,51 @@
+'use client';
+
+import React from 'react';
+import { EyeOff, User, Award } from 'lucide-react';
+
+export interface Issue {
+  id: string;
+  title: string;
+  repo: string;
+  author: string;
+  points: number;
+  status: 'closed' | 'open';
+  labels: string[];
+}
+
+interface IssueCardProps {
+  issue: Issue;
+  active?: boolean;
+}
+
+export default function IssueCard({ issue, active }: IssueCardProps) {
+  return (
+    <div className={`p-4 transition-all cursor-pointer group ${active ? 'bg-surface-high ring-1 ring-accent/20' : 'hover:bg-surface-mid'} border-sleek`}>
+        <div className="flex flex-wrap gap-2">
+          <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${issue.status === 'closed' ? 'bg-muted-foreground/10 text-muted-foreground' : 'bg-accent/10 text-accent'} border border-current opacity-70`}>
+            {issue.status}
+          </span>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 font-bold flex items-center gap-1">
+             <Award size={10} />
+             Points earned
+          </span>
+        </div>
+      
+      <h3 className={`text-sm font-semibold mb-2 line-clamp-2 leading-snug ${active ? 'text-foreground' : 'text-foreground/80 dark:text-foreground/70 group-hover:text-foreground'}`}>
+        <span className="text-muted-foreground mr-1 font-mono tracking-tighter">#{issue.id}</span>
+        {issue.title}
+      </h3>
+      
+      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border-subtle/50">
+        <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center overflow-hidden border border-accent/20 shrink-0">
+          <User size={12} className="text-accent" />
+        </div>
+        <div className="flex items-center gap-1.5 overflow-hidden">
+          <span className="text-[11px] font-medium text-muted-foreground truncate">{issue.author}</span>
+          <span className="text-muted-foreground opacity-50">/</span>
+          <span className="text-[11px] font-bold text-foreground/80 group-hover:text-foreground truncate">{issue.repo}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
