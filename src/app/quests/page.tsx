@@ -22,6 +22,7 @@ import Link from 'next/link';
 interface Quest {
   id: string;
   title: string;
+  description: string;
   category: 'code';
   reward: number;
   mode: 'open' | 'proposal';
@@ -47,6 +48,7 @@ export default function QuestsPage() {
           const liveQuests: Quest[] = result.data.map((b: any) => ({
             id: b.id,
             title: b.title,
+            description: b.description || '',
             category: 'code', // Default to code for GitHub issues
             reward: b.reward,
             mode: 'open',
