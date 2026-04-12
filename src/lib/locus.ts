@@ -24,36 +24,60 @@ export interface PayoutData {
 }
 
 export async function checkBalance(): Promise<LocusResponse<BalanceData>> {
-  const response = await fetch(`${LOCUS_API_BASE}/pay/balance`, {
-    headers: {
-      'Authorization': `Bearer ${LOCUS_API_KEY}`,
-    },
-  });
-  return response.json();
+  try {
+    if (!LOCUS_API_KEY) {
+      return { success: false, error: 'Configuration Error', message: 'Locus API Key is not set' };
+    }
+
+    const response = await fetch(`${LOCUS_API_BASE}/pay/balance`, {
+      headers: {
+        'Authorization': `Bearer ${LOCUS_API_KEY}`,
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { 
+        success: false, 
+        error: data.error || 'API_ERROR', 
+        message: data.message || `Locus API responded with status ${response.status}` 
+      };
+    }
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: 'NETWORK_ERROR', message: error.message };
+  }
 }
 
-/**
- * Send USDC to an address directly.
- */
 export async function sendPayment(toAddress: string, amount: number, memo: string): Promise<LocusResponse<PayoutData>> {
-  const response = await fetch(`${LOCUS_API_BASE}/pay/send`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${LOCUS_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      to_address: toAddress,
-      amount,
-      memo,
-    }),
-  });
-  return response.json();
+  try {
+    if (!LOCUS_API_KEY) {
+      return { success: false, error: 'Configuration Error', message: 'Locus API Key is not set' };
+    }
+
+    const response = await fetch(`${LOCUS_API_BASE}/pay/send`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOCUS_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to_address: toAddress,
+        amount,
+        memo,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.error || 'API_ERROR', message: data.message };
+    }
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: 'NETWORK_ERROR', message: error.message };
+  }
 }
 
-/**
- * Send USDC to an email (Escrow).
- */
+export async function sendEscrow(email: string, amount: number, memo: string): Promise<LocusResponse<PayoutData>> {
   try {
     if (!LOCUS_API_KEY) {
       console.error('LOCUS_API_KEY is missing from environment variables');
