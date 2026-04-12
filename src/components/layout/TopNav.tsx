@@ -170,7 +170,6 @@ export default function TopNav() {
               </>
             ) : (
               <>
-                <MobileMenuItem icon={<BriefcaseBusiness size={18} />} label="Bounties" href="/quests" onClick={() => setIsMenuOpen(false)} />
                 <MobileMenuItem icon={<Zap size={18} />} label="Submissions" href="/timeline" onClick={() => setIsMenuOpen(false)} />
               </>
             )}

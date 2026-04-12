@@ -82,7 +82,6 @@ export default function Sidebar() {
           </>
         ) : (
           <>
-            <SidebarItem icon={<BriefcaseBusiness size={24} strokeWidth={1.8} />} label="Bounties" href="/quests" />
             <SidebarItem icon={<Zap size={24} strokeWidth={1.8} />} label="Submissions" href="/timeline" />
           </>
         )}

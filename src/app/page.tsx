@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Filter, SortAsc, ArrowLeft, Plus, Code2, ExternalLink, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Filter, SortAsc, ArrowLeft, Plus, Code2, ExternalLink, Shield, Loader2 } from 'lucide-react';
 import IssueCard, { Issue } from '@/components/ui/IssueCard';
 import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
@@ -59,24 +60,51 @@ const MOCK_MAINTAINER_BOUNTIES: Issue[] = [
 
 export default function Home() {
   const { role } = useRole();
-  const issuesList = role === 'contributor' ? MOCK_ISSUES : MOCK_MAINTAINER_BOUNTIES;
-  
-  const [selectedIssue, setSelectedIssue] = useState<Issue>(issuesList[0]);
+  const [bounties, setBounties] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedIssue, setSelectedIssue] = useState<any>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
 
-  const handleSelectIssue = (issue: Issue) => {
+  React.useEffect(() => {
+    async function fetchBounties() {
+      try {
+        const response = await fetch('/api/bounties');
+        const result = await response.json();
+        if (result.success) {
+          const transformed = result.data.map((b: any) => ({
+            id: b.id,
+            title: b.title,
+            description: b.description,
+            repo: b.repo.split('/')[1] || b.repo,
+            repoFullName: b.repo,
+            issueNumber: b.issueNumber,
+            author: 'Admin',
+            points: b.reward,
+            reward: b.reward,
+            status: b.status,
+            labels: ['GitHub Issue']
+          }));
+          setBounties(transformed);
+          if (transformed.length > 0) {
+            setSelectedIssue(transformed[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching bounties:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchBounties();
+  }, [role]);
+
+  const handleSelectIssue = (issue: any) => {
     setSelectedIssue(issue);
     setShowMobileDetail(true);
   };
 
-  // Switch selected issue when role changes if current choice is not in the new list
-  React.useEffect(() => {
-    setSelectedIssue(issuesList[0]);
-  }, [role]);
-
   return (
     <div className="flex flex-1 overflow-hidden relative">
-      {/* Left Pane - List View */}
       <div className={`
         ${showMobileDetail ? 'hidden lg:flex' : 'flex'} 
         w-full lg:w-[420px] flex-col border-r border-border-subtle bg-surface-low shrink-0 h-full transition-all duration-300
@@ -90,29 +118,32 @@ export default function Home() {
               <button className="bg-surface-high p-2 rounded-xl hover:bg-accent/10 hover:text-accent transition-all">
                 <Filter size={18} />
               </button>
-              <button className="bg-surface-high p-2 rounded-xl hover:bg-accent/10 hover:text-accent transition-all">
-                <SortAsc size={18} />
-              </button>
             </div>
           </div>
 
           {role === 'maintainer' && (
-            <button className="w-full py-4 bg-surface-high border border-dashed border-border-subtle rounded-2xl flex items-center justify-center gap-3 text-muted-foreground hover:text-accent hover:border-accent/40 transition-all group overflow-hidden relative">
-               <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Link 
+              href="/maintainer/create"
+              className="w-full py-4 bg-accent text-white rounded-2xl flex items-center justify-center gap-3 hover:bg-accent-hover transition-all group overflow-hidden relative shadow-xl shadow-accent/20"
+            >
                <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-               <span className="text-xs font-black uppercase tracking-widest">Import from GitHub</span>
-            </button>
+               <span className="text-xs font-black uppercase tracking-widest">Post New Bounty</span>
+            </Link>
           )}
         </div>
         
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 lg:p-4 space-y-3">
-          {issuesList.map((issue) => (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="animate-spin text-accent" size={32} />
+            </div>
+          ) : bounties.map((issue) => (
             <div key={issue.id} onClick={() => handleSelectIssue(issue)}>
-              <IssueCard issue={issue} active={selectedIssue.id === issue.id} />
+              <IssueCard issue={issue} active={selectedIssue?.id === issue.id} />
             </div>
           ))}
 
-          {issuesList.length === 0 && (
+          {!isLoading && bounties.length === 0 && (
             <div className="flex flex-col items-center justify-center h-64 text-center p-8 opacity-50">
                <Shield size={48} className="mb-4 text-muted-foreground" />
                <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No active items</p>
@@ -140,13 +171,20 @@ export default function Home() {
                 <Code2 size={16} />
              </div>
              <span className="text-xs font-black uppercase tracking-widest text-foreground truncate max-w-[120px]">
-                {selectedIssue.repo}
+                {selectedIssue?.repo || 'Loading...'}
              </span>
           </div>
         </div>
         
         <div className="flex-1 overflow-hidden">
-           <IssueDetail issue={selectedIssue} />
+           {selectedIssue ? (
+             <IssueDetail issue={selectedIssue} />
+           ) : (
+             <div className="flex-1 flex flex-col items-center justify-center bg-surface-low opacity-30">
+                <Loader2 className="animate-spin text-accent mb-4" size={48} />
+                <p className="text-sm font-black uppercase tracking-widest">Awaiting Selection</p>
+             </div>
+           )}
         </div>
       </div>
     </div>

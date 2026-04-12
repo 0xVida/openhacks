@@ -79,23 +79,22 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
           </div>
           
           <article className="prose prose-sm dark:prose-invert max-w-none text-foreground/90">
-            <p className="text-base md:text-lg">
-              The <code className="bg-accent/10 px-1.5 py-0.5 rounded text-accent font-semibold italic">StorageInspector::compute_diff</code> function currently passes an empty key-filter slice. 
-            </p>
-            <p>
-               This causes every storage entry to be shown in the diff even for contracts with large ledger state. For token contracts with many balance entries, this produces extremely noisy output that makes the debugging process cumbersome for developers.
-            </p>
+            <div className="text-base md:text-lg whitespace-pre-wrap font-medium leading-relaxed">
+              {issue.description || "No detailed description provided for this bounty."}
+            </div>
           </article>
           
-          <div className="bg-accent/5 border-l-4 border-accent p-6 rounded-r-3xl shadow-sm">
-             <div className="flex items-center gap-2 text-accent font-black uppercase tracking-[0.2em] text-[10px] mb-3">
-                <Zap size={14} />
-                Proposed Solution
-             </div>
-             <p className="text-sm md:text-base font-medium text-foreground">
-                Allow the user to pass a <code className="bg-accent/10 px-1.5 py-0.5 rounded font-mono text-xs">--watch-keys</code> flag or provide a per-session filter list to focus on specific state changes that matter for the current debugging context.
-             </p>
-          </div>
+          {issue.reward > 1000 && (
+            <div className="bg-accent/5 border-l-4 border-accent p-6 rounded-r-3xl shadow-sm">
+               <div className="flex items-center gap-2 text-accent font-black uppercase tracking-[0.2em] text-[10px] mb-3">
+                  <Zap size={14} />
+                  Note for Contributors
+               </div>
+               <p className="text-sm md:text-base font-medium text-foreground">
+                  This is a high-priority bounty. Please ensure your proposal includes a detailed technical breakdown and timeline.
+               </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-16 pt-12 border-t border-border-subtle">
