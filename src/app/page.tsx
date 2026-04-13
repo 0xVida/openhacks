@@ -14,10 +14,15 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   // Resizable sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load persistence
   React.useEffect(() => {
@@ -121,10 +126,11 @@ export default function Home() {
   return (
     <div className="flex flex-1 h-full overflow-hidden relative">
       <div 
-        style={{ width: (typeof window !== 'undefined' && window.innerWidth >= 1024) ? `${sidebarWidth}px` : '100%' }}
+        style={mounted ? { width: `${sidebarWidth}px` } : {}}
         className={`
+          w-full lg:w-[320px]
           ${showMobileDetail ? 'hidden lg:flex' : 'flex'} 
-          ${isResizing ? '' : 'transition-[width] duration-300'}
+          ${isResizing ? '' : (mounted ? 'transition-[width] duration-300' : '')}
           flex-col border-r border-border-subtle bg-surface-low shrink-0 h-full relative group/sidebar
         `}
       >
