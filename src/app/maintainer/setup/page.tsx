@@ -64,10 +64,30 @@ function MaintainerSetupContent() {
     r.full_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSelectRepo = (repo: string) => {
+  const handleSelectRepo = async (repo: string) => {
     setSelectedRepo(repo);
     localStorage.setItem('openhacks_setup_repo', repo);
-    setStep(2);
+    
+    // Smart Check: Does the user already have an installation for this repo's owner?
+    const owner = repo.split('/')[0];
+    try {
+      const res = await fetch('/api/github/installations');
+      const data = await res.json();
+      
+      const existingInstallation = data.installations?.find((inst: any) => 
+        inst.account.toLowerCase() === owner.toLowerCase()
+      );
+
+      if (existingInstallation) {
+        console.log("Existing installation found for:", owner);
+        setStep(3); // Skip to Success step
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking installations:", error);
+    }
+    
+    setStep(2); // Regular flow: show Install button
   };
 
   const handleInstallApp = () => {

@@ -212,10 +212,13 @@ export default function Home() {
            {selectedIssue ? (
              <IssueDetail issue={selectedIssue} />
            ) : (
-             <div className="flex-1 flex flex-col items-center justify-center bg-surface-low opacity-30">
-                <Loader2 className="animate-spin text-accent mb-4" size={48} />
-                <p className="text-sm font-black uppercase tracking-widest">Awaiting Selection</p>
-             </div>
+        <div className="h-full flex flex-col items-center justify-center bg-surface-low opacity-30">
+          <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
+            <Loader2 className="animate-spin text-accent mb-6" size={48} />
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-foreground/50">Awaiting Selection</p>
+            <div className="w-12 h-0.5 bg-accent/20 mt-4 rounded-full" />
+          </div>
+        </div>
            )}
         </div>
       </div>
