@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   CheckCircle2, 
   Circle, 
@@ -18,14 +18,29 @@ import {
 import { useRole } from '@/components/providers/role-context';
 import RootContainer from '@/components/layout/RootContainer';
 
-export default function MaintainerSetupPage() {
+function MaintainerSetupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { githubUser, selectedRepo, setSelectedRepo } = useRole();
   const [step, setStep] = useState(1);
   const [search, setSearch] = useState('');
   const [isInstalling, setIsInstalling] = useState(false);
   const [realRepos, setRealRepos] = useState<any[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(true);
+
+  // Constants
+  const GITHUB_APP_SLUG = "openhacks-by-0xvida";
+
+  // Check for installation_id on mount
+  React.useEffect(() => {
+    const installationId = searchParams.get('installation_id');
+    const savedRepo = localStorage.getItem('openhacks_setup_repo');
+    
+    if (installationId) {
+      if (savedRepo) setSelectedRepo(savedRepo);
+      setStep(3);
+    }
+  }, [searchParams, setSelectedRepo]);
 
   React.useEffect(() => {
     async function fetchRepos() {
@@ -51,16 +66,16 @@ export default function MaintainerSetupPage() {
 
   const handleSelectRepo = (repo: string) => {
     setSelectedRepo(repo);
+    localStorage.setItem('openhacks_setup_repo', repo);
     setStep(2);
   };
 
   const handleInstallApp = () => {
     setIsInstalling(true);
-    // Simulate GitHub App installation redirect/success
-    setTimeout(() => {
-      setIsInstalling(false);
-      setStep(3);
-    }, 2000);
+    
+    // Redirect to real GitHub App installation page
+    const installUrl = `https://github.com/apps/${GITHUB_APP_SLUG}/installations/new`;
+    window.location.assign(installUrl);
   };
 
   const finalizeSetup = async () => {
@@ -71,6 +86,7 @@ export default function MaintainerSetupPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ repoFullName: selectedRepo })
         });
+        localStorage.removeItem('openhacks_setup_repo');
       } catch (error) {
         console.error('Error registering repo:', error);
       }
@@ -224,6 +240,20 @@ export default function MaintainerSetupPage() {
         </div>
       </div>
     </RootContainer>
+  );
+}
+
+export default function MaintainerSetupPage() {
+  return (
+    <Suspense fallback={
+      <RootContainer>
+        <div className="flex-1 bg-surface-low flex items-center justify-center">
+          <Loader2 className="animate-spin text-accent" size={48} />
+        </div>
+      </RootContainer>
+    }>
+      <MaintainerSetupContent />
+    </Suspense>
   );
 }
 
