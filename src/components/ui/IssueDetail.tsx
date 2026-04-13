@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
 import { 
   User, 
   ExternalLink, 
@@ -44,10 +45,6 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
 
       <div className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-12">
         <div className="flex flex-col gap-2 mb-8">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono mb-2">
-             <Clock size={14} />
-             <span>Real-time GitHub Data</span>
-          </div>
           <div className="flex flex-col md:flex-row md:items-start gap-4">
             <h2 className="text-2xl md:text-3xl font-bold text-muted-foreground shrink-0 opacity-50">#{issue.issueNumber || issue.id}</h2>
             <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight tracking-tight">{issue.title}</h1>
@@ -69,8 +66,12 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
         
         <div className="space-y-8 text-foreground/90 max-w-4xl leading-relaxed">
           <article className="prose prose-sm dark:prose-invert max-w-none text-foreground/90">
-            <div className="text-base md:text-lg whitespace-pre-wrap font-medium leading-relaxed">
-              {issue.description || "No detailed description provided for this bounty."}
+            <div className="text-base md:text-lg font-medium leading-relaxed markdown-content">
+              {issue.description ? (
+                <ReactMarkdown>{issue.description}</ReactMarkdown>
+              ) : (
+                "No detailed description provided for this bounty."
+              )}
             </div>
           </article>
           
@@ -120,10 +121,15 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
         </div>
 
         {role === 'contributor' && (
-          <button className="w-full py-5 bg-foreground text-background hover:bg-accent hover:text-white rounded-2xl font-black transition-all shadow-xl shadow-black/10 tracking-tight flex items-center justify-center gap-3 group active:scale-95">
+          <a 
+            href={`https://github.com/${issue.repoFullName}/issues/${issue.issueNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-5 bg-foreground text-background hover:bg-accent hover:text-white rounded-2xl font-black transition-all shadow-xl shadow-black/10 tracking-tight flex items-center justify-center gap-3 group active:scale-95 text-center no-underline"
+          >
              <ExternalLink size={18} className="group-hover:rotate-12 transition-transform" />
              VIEW ON GITHUB
-          </button>
+          </a>
         )}
       </div>
     </div>

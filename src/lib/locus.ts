@@ -43,7 +43,8 @@ export async function checkBalance(): Promise<LocusResponse<BalanceData>> {
         message: data.message || `Locus API responded with status ${response.status}` 
       };
     }
-    return { success: true, data };
+    // The Locus API already returns { success, data } or { success, error }
+    return data;
   } catch (error: any) {
     return { success: false, error: 'NETWORK_ERROR', message: error.message };
   }
@@ -71,7 +72,7 @@ export async function sendPayment(toAddress: string, amount: number, memo: strin
     if (!response.ok) {
       return { success: false, error: data.error || 'API_ERROR', message: data.message };
     }
-    return { success: true, data };
+    return data;
   } catch (error: any) {
     return { success: false, error: 'NETWORK_ERROR', message: error.message };
   }
@@ -112,7 +113,7 @@ export async function sendEscrow(email: string, amount: number, memo: string): P
       };
     }
 
-    return { success: true, data };
+    return data;
   } catch (error: any) {
     console.error('Locus sendEscrow Exception:', error);
     return { 

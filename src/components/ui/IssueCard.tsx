@@ -29,14 +29,16 @@ export default function IssueCard({ issue, active }: IssueCardProps) {
           <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${issue.status === 'closed' ? 'bg-muted-foreground/10 text-muted-foreground' : 'bg-accent/10 text-accent'} border border-current opacity-70`}>
             {issue.status}
           </span>
-          <span className="text-[10px] px-2 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 font-bold flex items-center gap-1">
-             <Award size={10} />
-             Points earned
-          </span>
+          {issue.status !== 'open' && (
+            <span className="text-[10px] px-2 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 font-bold flex items-center gap-1">
+               <Award size={10} />
+               Points earned
+            </span>
+          )}
         </div>
       
       <h3 className={`text-sm font-semibold mb-2 line-clamp-2 leading-snug ${active ? 'text-foreground' : 'text-foreground/80 dark:text-foreground/70 group-hover:text-foreground'}`}>
-        <span className="text-muted-foreground mr-1 font-mono tracking-tighter">#{issue.id}</span>
+        <span className="text-muted-foreground mr-1 font-mono tracking-tighter">#{issue.issueNumber}</span>
         {issue.title}
       </h3>
       
