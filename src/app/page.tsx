@@ -86,18 +86,27 @@ export default function Home() {
             id: b.id,
             title: b.title,
             description: b.description,
-            repo: b.repo.split('/')[1] || b.repo,
-            repoFullName: b.repo,
-            issueNumber: b.issueNumber,
-            author: 'Admin',
-            points: b.reward,
-            reward: b.reward,
+            repo: b.repo_fullname.split('/')[1] || b.repo_fullname,
+            repoFullName: b.repo_fullname,
+            issueNumber: b.issue_number,
+            author: b.repo_fullname.split('/')[0],
+            points: b.reward_amount,
+            reward: b.reward_amount,
             status: b.status,
             labels: ['GitHub Issue']
           }));
-          setBounties(transformed);
-          if (transformed.length > 0) {
-            setSelectedIssue(transformed[0]);
+
+          // Filter logic: In Maintainer mode, maybe you only want to see your own?
+          // Actually, per user request, "shows on contributor side too", so the list is unified but UI adapts.
+          const filtered = role === 'maintainer' 
+            ? transformed.filter((b: any) => registeredRepos.includes(b.repoFullName))
+            : transformed;
+
+          setBounties(filtered);
+          if (filtered.length > 0) {
+            setSelectedIssue(filtered[0]);
+          } else {
+            setSelectedIssue(null);
           }
         }
       } catch (error) {
@@ -107,7 +116,7 @@ export default function Home() {
       }
     }
     fetchBounties();
-  }, [role]);
+  }, [role, registeredRepos]);
 
   const handleSelectIssue = (issue: any) => {
     setSelectedIssue(issue);

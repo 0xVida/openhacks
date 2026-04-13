@@ -32,24 +32,24 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
                 <User size={20} className="text-accent" />
              </div>
              <div>
-                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Assigned to</p>
-                <p className="text-sm font-black text-foreground tracking-tight">Degenerate Alchemist</p>
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Maintainer</p>
+                <p className="text-sm font-black text-foreground tracking-tight">{issue.author || 'Project Owner'}</p>
              </div>
          </div>
          <div className="text-right">
             <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Reward</p>
-            <p className="text-sm font-black text-accent tracking-tight">{issue.points} Pts</p>
+            <p className="text-sm font-black text-accent tracking-tight">{issue.reward} Pts</p>
          </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-12">
         <div className="flex flex-col gap-2 mb-8">
           <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono mb-2">
-             <History size={14} />
-             <span>Opened March 28, 2026</span>
+             <Clock size={14} />
+             <span>Real-time GitHub Data</span>
           </div>
           <div className="flex flex-col md:flex-row md:items-start gap-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-muted-foreground shrink-0 opacity-50">#{issue.id}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-muted-foreground shrink-0 opacity-50">#{issue.issueNumber || issue.id}</h2>
             <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight tracking-tight">{issue.title}</h1>
           </div>
         </div>
@@ -57,191 +57,78 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
         <div className="flex flex-wrap items-center gap-6 mb-10 pb-10 border-b border-border-subtle">
           <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-surface-high border border-border-subtle hover:border-accent/40 transition-colors cursor-pointer group">
             <Building2 size={16} className="text-muted-foreground group-hover:text-accent transition-colors" />
-            <span className="text-sm font-semibold text-foreground/90">{issue.author} / {issue.repo}</span>
+            <span className="text-sm font-semibold text-foreground/90">{issue.repoFullName || issue.repo}</span>
             <ExternalLink size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
              <Clock size={16} />
-             <span>Deadline: Mar 30</span>
+             <span>Status: {issue.status.toUpperCase()}</span>
           </div>
         </div>
         
         <div className="space-y-8 text-foreground/90 max-w-4xl leading-relaxed">
-          <div className="bg-surface-mid border border-border-subtle rounded-2xl p-5 md:p-6 group relative overflow-hidden">
-            <div className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest mb-4">
-               <FileCode size={14} />
-               Problem Location
-            </div>
-            <code className="text-xs md:text-sm font-mono block break-all text-foreground/80 bg-black/10 dark:bg-white/10 p-3 rounded-xl italic">
-               src/repl/executor.rs — ReplExecutor::call_function
-            </code>
-          </div>
-          
           <article className="prose prose-sm dark:prose-invert max-w-none text-foreground/90">
             <div className="text-base md:text-lg whitespace-pre-wrap font-medium leading-relaxed">
               {issue.description || "No detailed description provided for this bounty."}
             </div>
           </article>
           
-          {issue.reward > 1000 && (
-            <div className="bg-accent/5 border-l-4 border-accent p-6 rounded-r-3xl shadow-sm">
-               <div className="flex items-center gap-2 text-accent font-black uppercase tracking-[0.2em] text-[10px] mb-3">
-                  <Zap size={14} />
-                  Note for Contributors
-               </div>
-               <p className="text-sm md:text-base font-medium text-foreground">
-                  This is a high-priority bounty. Please ensure your proposal includes a detailed technical breakdown and timeline.
-               </p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-16 pt-12 border-t border-border-subtle">
-          <div className="flex items-center justify-between mb-8">
-             <h3 className="text-xl font-black text-foreground flex items-center gap-3">
-                <History size={22} className="text-accent" />
-                Applications
-             </h3>
-             {role === 'contributor' && (
-               <a href={`/apply/${issue.id}`} className="md:hidden px-6 py-2 bg-accent text-white rounded-full font-bold text-sm shadow-lg shadow-accent/20">
-                  Apply
-               </a>
-             )}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-             <ApplicantCard 
-                issueId={issue.id}
-                appId="1"
-                name="Charles Chinedum" 
-                time="2h ago" 
-                type="verified" 
-                score={98}
-                pitch="Experienced Rust dev with 5+ years in systems programming. I built the initial storage layer for..."
-                tags={['Rust expert', 'Reliable']}
-             />
-             <ApplicantCard 
-                issueId={issue.id}
-                appId="2"
-                name="Stellar Dev" 
-                time="5h ago" 
-                type="new" 
-                score={85}
-                pitch="I've worked on similar Soroban debugging tools before. Can deliver a fix within 48 hours."
-                tags={['Soroban', 'Fast']}
-             />
-             <ApplicantCard 
-                issueId={issue.id}
-                appId="3"
-                name="Rust Wizard" 
-                time="12h ago" 
-                type="verified" 
-                score={92}
-                pitch="Systems engineer focused on performance. I can optimize the compute_diff logic while I'm at it."
-                tags={['Perf king', 'Safe']}
-             />
+          <div className="bg-accent/5 border-l-4 border-accent p-6 rounded-r-3xl shadow-sm">
+             <div className="flex items-center gap-2 text-accent font-black uppercase tracking-[0.2em] text-[10px] mb-3">
+                <Zap size={14} />
+                Bounty Instructions
+             </div>
+             <p className="text-sm md:text-base font-medium text-foreground">
+                To claim this bounty, please submit a pull request on GitHub referencing this issue. Once the maintainer merges your PR, the payment will be automatically triggered.
+             </p>
           </div>
         </div>
       </div>
       
 
       <div className="hidden md:flex w-80 border-l border-border-subtle bg-surface-low p-8 shrink-0 flex-col gap-10">
-        {role === 'contributor' && (
-          <a href={`/apply/${issue.id}`} className="w-full py-4 bg-accent hover:bg-accent-hover text-center text-white rounded-2xl font-black transition-all shadow-xl shadow-accent/30 tracking-tight transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2">
-             <Zap size={18} fill="currentColor" />
-             APPLY TO WORK
-          </a>
-        )}
-        
         <div className="space-y-10">
-           <div className="group">
-              <h4 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black mb-4">Assigned Applicant</h4>
-              <div className="flex items-center gap-4 bg-surface-mid p-4 rounded-2xl border border-border-subtle group-hover:border-accent/40 transition-all cursor-pointer">
-                 <div className="w-10 h-10 rounded-full bg-purple-500/20 border border-purple-500/20 overflow-hidden flex items-center justify-center text-purple-500">
-                    <User size={20} />
+           <div className="group text-center">
+              <h4 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black mb-6">Bounty Value</h4>
+              <div className="bg-surface-mid p-8 rounded-[2.5rem] border-2 border-accent/20 flex flex-col items-center justify-center gap-2 group-hover:border-accent/40 transition-all shadow-xl shadow-accent/5">
+                 <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent mb-2">
+                    <Award size={32} />
                  </div>
-                 <span className="text-sm font-bold text-foreground truncate uppercase tracking-tight">Degenerate Alchemist</span>
+                 <span className="text-3xl font-black text-foreground">{issue.reward}</span>
+                 <span className="text-[10px] font-black text-accent uppercase tracking-widest">USDC Credits</span>
               </div>
            </div>
            
            <div className="grid grid-cols-1 gap-6 pt-6 border-t border-border-subtle">
-              <DetailRow icon={<Clock size={16} />} label="Due Date" value="Mar 30, 2026" />
-              <DetailRow icon={<Award size={16} />} label="Reward" value={`${issue.points} Points`} />
-              <DetailRow icon={<Zap size={16} />} label="Complexity" value="High" color="text-orange-500" />
+              <DetailRow icon={<Clock size={16} />} label="Issue Status" value={issue.status.toUpperCase()} />
+              <DetailRow icon={<Zap size={16} />} label="Type" value="GitHub Issue" color="text-accent" />
            </div>
 
            <div className="pt-8 border-t border-border-subtle">
-              <h4 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black mb-4 group-hover:text-accent transition-colors">Program Details</h4>
+              <h4 className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-black mb-4">Project Authority</h4>
               <div className="flex items-center gap-4 bg-surface-high p-4 rounded-2xl border border-border-subtle hover:shadow-md transition-all">
-                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                    <Building2 size={16} />
+                 <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+                    <Building2 size={20} />
                  </div>
-                 <div>
-                    <span className="text-xs font-black text-foreground block tracking-tight">STELLAR WAVE</span>
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Q1 Cohort</span>
+                 <div className="flex-1 overflow-hidden">
+                    <span className="text-xs font-black text-foreground block tracking-tight truncate uppercase">{issue.repoFullName?.split('/')[0] || 'Unknown'}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Verified Owner</span>
                  </div>
               </div>
            </div>
         </div>
+
+        {role === 'contributor' && (
+          <button className="w-full py-5 bg-foreground text-background hover:bg-accent hover:text-white rounded-2xl font-black transition-all shadow-xl shadow-black/10 tracking-tight flex items-center justify-center gap-3 group active:scale-95">
+             <ExternalLink size={18} className="group-hover:rotate-12 transition-transform" />
+             VIEW ON GITHUB
+          </button>
+        )}
       </div>
     </div>
   );
 }
-
-const ApplicantCard = ({ issueId, appId, name, time, type, score, pitch, tags }: { 
-  issueId: string, 
-  appId: string,
-  name: string, 
-  time: string, 
-  type: 'verified' | 'new',
-  score: number,
-  pitch: string,
-  tags: string[]
-}) => (
-  <Link href={`/issue/${issueId}/application/${appId}`} className="group block">
-    <div className="bg-surface-mid border border-border-subtle rounded-2xl p-6 flex flex-col gap-4 hover:border-accent/40 hover:shadow-2xl hover:shadow-accent/5 transition-all cursor-pointer transform hover:-translate-y-1 relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3">
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Match</span>
-          <span className="text-xl font-black text-accent leading-none">{score}%</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-         <div className="w-14 h-14 rounded-full bg-surface-high border border-border-subtle flex items-center justify-center text-muted-foreground group-hover:text-accent transition-all ring-0 group-hover:ring-4 ring-accent/5 overflow-hidden">
-            <User size={24} />
-         </div>
-         <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-black text-foreground group-hover:text-accent transition-colors text-base uppercase tracking-tight">{name}</h4>
-              {type === 'verified' && <CheckCircle2 size={14} className="text-green-500" />}
-            </div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{time}</p>
-         </div>
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-sm text-foreground/70 line-clamp-2 leading-relaxed italic">
-          "{pitch}"
-        </p>
-        
-        <div className="flex flex-wrap gap-2">
-          {tags.map(tag => (
-            <span key={tag} className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-surface-high border border-border-subtle text-muted-foreground rounded-lg group-hover:border-accent/20 transition-colors">
-              {tag}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="pt-4 border-t border-border-subtle flex items-center justify-between">
-        <span className="text-[10px] font-black text-accent uppercase tracking-widest">View Full Proposal</span>
-        <ChevronRight size={16} className="text-accent group-hover:translate-x-1 transition-transform" />
-      </div>
-    </div>
-  </Link>
-);
 
 const DetailRow = ({ icon, label, value, color = "text-foreground" }: { icon: React.ReactNode, label: string, value: string, color?: string }) => (
   <div className="flex items-center justify-between">

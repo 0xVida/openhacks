@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getBounties } from '@/lib/store';
+import { db } from '@/lib/db';
 
 export async function GET() {
   try {
-    const bounties = getBounties();
+    const bounties = await db.getBounties();
     // Return only open bounties to agents
     const openBounties = bounties.filter(b => b.status === 'open');
     

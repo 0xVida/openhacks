@@ -25,17 +25,18 @@ export default function ProjectsPage() {
           // Group by repo
           const repoMap: Record<string, Project> = {};
           result.data.forEach((b: any) => {
-            if (!repoMap[b.repo]) {
-              repoMap[b.repo] = {
-                name: b.repo.split('/')[1] || b.repo,
-                fullName: b.repo,
+            const repoName = b.repo_fullname || b.repo; // Handle both for safety
+            if (!repoMap[repoName]) {
+              repoMap[repoName] = {
+                name: repoName.split('/')[1] || repoName,
+                fullName: repoName,
                 count: 0,
                 description: 'Active open-source repository on GitHub.'
               };
             }
-            repoMap[b.repo].count++;
+            repoMap[repoName].count++;
           });
-          setProjects(Object.values(repoMap));
+          setProjects(Object.values(repoMap).sort((a,b) => b.count - a.count));
         }
       } catch (error) {
         console.error('Error fetching projects:', error);

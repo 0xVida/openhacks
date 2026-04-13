@@ -118,7 +118,7 @@ export default function CreateBountyPage() {
 
       if (result.success) {
         alert('Bounty launched successfully! Funds are now locked in escrow.');
-        router.push('/quests');
+        router.push('/');
       } else {
         alert(`Failed to launch bounty: ${result.error || result.message}`);
       }

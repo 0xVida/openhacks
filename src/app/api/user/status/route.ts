@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getMaintainer, addMaintainerRepo } from '@/lib/store';
+import { supabase } from '@/lib/supabase';
 
 export async function GET() {
   try {
@@ -16,22 +16,29 @@ export async function GET() {
     }
 
     const login = (session.user as any).login || session.user.name;
-    const maintainerData = getMaintainer(login);
+    
+    // Fetch profile from Supabase
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', login)
+      .single();
 
-    if (maintainerData) {
+    if (error || !profile) {
       return NextResponse.json({
         success: true,
-        role: 'maintainer',
-        isRegistered: true,
-        repos: maintainerData.repos
+        role: 'contributor',
+        isRegistered: false,
+        repos: []
       });
     }
 
     return NextResponse.json({
       success: true,
-      role: 'contributor',
-      isRegistered: false,
-      repos: []
+      role: profile.role,
+      isRegistered: profile.role === 'maintainer',
+      repos: profile.metadata?.repos || [],
+      reputation: profile.reputation
     });
   } catch (error) {
     console.error('Error fetching user status:', error);
@@ -52,9 +59,33 @@ export async function POST(req: Request) {
     }
 
     const login = (session.user as any).login || session.user.name;
-    console.log(`[API] Registering maintainer repo: ${repoFullName} for user: ${login}`);
     
-    addMaintainerRepo(login, repoFullName);
+    // Get current profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('username', login)
+      .single();
+
+    if (!profile) {
+       return NextResponse.json({ success: false, error: 'Profile not found' }, { status: 404 });
+    }
+
+    const currentRepos = profile.metadata?.repos || [];
+    if (!currentRepos.includes(repoFullName)) {
+      currentRepos.push(repoFullName);
+    }
+
+    // Update profile
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        role: 'maintainer',
+        metadata: { ...profile.metadata, repos: currentRepos }
+      })
+      .eq('username', login);
+
+    if (error) throw error;
 
     return NextResponse.json({
       success: true,

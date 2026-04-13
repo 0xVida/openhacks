@@ -86,7 +86,7 @@ export default function TopNav() {
           {role === 'contributor' && (
             <div className="hidden sm:flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full font-bold text-xs ring-1 ring-accent/20">
               <Trophy size={14} />
-              <span>1,400</span>
+              <span>{(githubUser as any)?.reputation || 0}</span>
             </div>
           )}
 
@@ -196,15 +196,6 @@ export default function TopNav() {
 
             <MobileMenuItem icon={<LayoutDashboard size={18} />} label="Dashboard" href="/" onClick={() => setIsMenuOpen(false)} />
             <MobileMenuItem icon={<Boxes size={18} />} label="Projects" href="/projects" onClick={() => setIsMenuOpen(false)} />
-            {role === 'contributor' ? (
-              <>
-                <MobileMenuItem icon={<Calendar size={18} />} label="My Tasks" href="/timeline" onClick={() => setIsMenuOpen(false)} />
-              </>
-            ) : (
-              <>
-                <MobileMenuItem icon={<Zap size={18} />} label="Submissions" href="/timeline" onClick={() => setIsMenuOpen(false)} />
-              </>
-            )}
             
             <hr className="my-2 border-border-subtle" />
             

@@ -75,16 +75,6 @@ export default function Sidebar() {
       <div className="flex flex-col gap-3 w-full flex-1">
         <SidebarItem icon={<LayoutDashboard size={24} strokeWidth={1.8} />} label="Dashboard" href="/" />
         <SidebarItem icon={<Boxes size={24} strokeWidth={1.8} />} label="Projects" href="/projects" />
-        
-        {role === 'contributor' ? (
-          <>
-            <SidebarItem icon={<Calendar size={24} strokeWidth={1.8} />} label="My Tasks" href="/timeline" />
-          </>
-        ) : (
-          <>
-            <SidebarItem icon={<Zap size={24} strokeWidth={1.8} />} label="Submissions" href="/timeline" />
-          </>
-        )}
       </div>
       
       <div className="mt-auto w-full flex flex-col gap-3 pt-8 border-t border-border-subtle">

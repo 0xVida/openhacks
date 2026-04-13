@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
-import { addBounty, Bounty } from '@/lib/store';
+import { db } from '@/lib/db';
 import { sendEscrow } from '@/lib/locus';
-import { v4 as uuidv4 } from 'uuid';
+import { auth } from '@/auth';
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session || !session.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { title, description, repo, issueNumber, reward, contributorEmail } = await request.json();
 
     if (!title || !description || !repo || !issueNumber || !reward) {
@@ -15,9 +20,6 @@ export async function POST(request: Request) {
     }
 
     // 1. Lock funds in Locus (Escrow)
-    // We use sendEscrow which sends USDC to an email address.
-    // If we don't have the contributor's email yet, we can send it to a "holding" address
-    // or just memoize the intent. For this demo, we'll use a placeholder email.
     const escrowTarget = contributorEmail || 'escrow@openhacks.com';
     const memo = `Escrow for Bounty: ${title} (${repo}#${issueNumber})`;
     
@@ -36,19 +38,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Add to local store
-    const newBounty: Bounty = {
-      id: uuidv4(),
+    // 2. Add to Supabase
+    const newBounty = await db.addBounty({
       title,
       description,
-      repo,
-      issueNumber: parseInt(issueNumber, 10),
-      reward: parseFloat(reward),
+      repo_fullname: repo,
+      issue_number: parseInt(issueNumber, 10),
+      reward_amount: parseFloat(reward),
       status: 'open',
-      locusEscrowId: locusResponse.data?.transaction_id
-    };
-
-    addBounty(newBounty);
+      maintainer_id: (session.user as any).id
+    });
 
     return NextResponse.json({
       success: true,

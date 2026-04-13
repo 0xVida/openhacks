@@ -29,6 +29,23 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [registeredRepos, setRegisteredRepos] = useState<string[]>([]);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+
+  // Initial load from localStorage
+  useEffect(() => {
+    const savedRole = localStorage.getItem('openhacks_active_role') as Role;
+    if (savedRole) {
+      setRole(savedRole);
+    }
+    setHasLoadedInitial(true);
+  }, []);
+
+  // Update localStorage when role changes
+  useEffect(() => {
+    if (hasLoadedInitial) {
+      localStorage.setItem('openhacks_active_role', role);
+    }
+  }, [role, hasLoadedInitial]);
 
   // Sync with Auth.js session and backend status
   useEffect(() => {
@@ -40,19 +57,20 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
           avatar_url: session.user.image || ''
         });
 
-        // Fetch real role from backend
+        // Fetch real role from backend to see if they ARE a maintainer
         try {
           const res = await fetch('/api/user/status');
           const data = await res.json();
           if (data.success) {
-            setRole(data.role);
             setRegisteredRepos(data.repos || []);
-          } else {
-            setRole('contributor');
+            // Only force 'maintainer' if they have repos AND no role was saved yet
+            const savedRole = localStorage.getItem('openhacks_active_role');
+            if (data.role === 'maintainer' && !savedRole) {
+              setRole('maintainer');
+            }
           }
         } catch (error) {
           console.error('Error syncing user status:', error);
-          setRole('contributor');
         }
       } else {
         setGithubUser(null);
@@ -61,10 +79,10 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
-    if (status !== 'loading') {
+    if (status !== 'loading' && hasLoadedInitial) {
       syncUserStatus();
     }
-  }, [session, status]);
+  }, [session, status, hasLoadedInitial]);
 
   return (
     <RoleContext.Provider value={{ 
