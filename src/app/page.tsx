@@ -81,16 +81,20 @@ export default function Home() {
             description: b.description,
             repo: b.repo_fullname.split('/')[1] || b.repo_fullname,
             repoFullName: b.repo_fullname,
-            issueNumber: b.issue_number,
+            issue_number: b.issue_number,
             author: b.repo_fullname.split('/')[0],
             points: b.reward_amount,
             reward: b.reward_amount,
             status: b.status,
+            maintainer_id: b.maintainer_id,
             labels: ['GitHub Issue']
           }));
 
           const filtered = role === 'maintainer' 
-            ? transformed.filter((b: any) => registeredRepos.includes(b.repoFullName))
+            ? transformed.filter((b: any) => 
+                registeredRepos.includes(b.repoFullName) || 
+                (githubUser?.id && b.maintainer_id === githubUser.id)
+              )
             : transformed;
 
           setBounties(filtered);

@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 type Role = 'contributor' | 'maintainer';
 
 interface GithubUser {
+  id?: string;
   login: string;
   name: string;
   avatar_url: string;
@@ -53,6 +54,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     async function syncUserStatus() {
       if (session?.user) {
         setGithubUser({
+          id: (session.user as any).id,
           login: (session.user as any).login || session.user.name || 'user',
           name: session.user.name || '',
           avatar_url: session.user.image || '',

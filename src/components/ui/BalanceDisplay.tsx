@@ -15,7 +15,7 @@ export function BalanceDisplay() {
     try {
       const response = await fetch('/api/maintainer/balance');
       const data = await response.json();
-      
+
       if (data.success && data.data) {
         setBalance(data.data.usdc_balance);
         setAddress(data.data.wallet_address);
@@ -38,7 +38,7 @@ export function BalanceDisplay() {
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
           <Wallet size={12} className="text-accent" />
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Locus Balance</span>
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Balance</span>
         </div>
         <div className="flex items-center gap-2">
           {isLoading ? (
@@ -53,8 +53,8 @@ export function BalanceDisplay() {
           )}
         </div>
       </div>
-      
-      <button 
+
+      <button
         onClick={fetchBalance}
         className="p-2 hover:bg-surface-high rounded-xl transition-colors text-muted-foreground hover:text-accent"
         title="Refresh Balance"
