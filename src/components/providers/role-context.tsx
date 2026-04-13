@@ -18,6 +18,7 @@ interface RoleContextType {
   setGithubUser: (user: GithubUser | null) => void;
   selectedRepo: string | null;
   setSelectedRepo: (repo: string | null) => void;
+  registeredRepos: string[];
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -27,6 +28,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<Role>('contributor');
   const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+  const [registeredRepos, setRegisteredRepos] = useState<string[]>([]);
 
   // Sync with Auth.js session and backend status
   useEffect(() => {
@@ -44,6 +46,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
           const data = await res.json();
           if (data.success) {
             setRole(data.role);
+            setRegisteredRepos(data.repos || []);
           } else {
             setRole('contributor');
           }
@@ -54,6 +57,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       } else {
         setGithubUser(null);
         setRole('contributor');
+        setRegisteredRepos([]);
       }
     }
     
@@ -69,7 +73,8 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
       githubUser, 
       setGithubUser, 
       selectedRepo, 
-      setSelectedRepo 
+      setSelectedRepo,
+      registeredRepos
     }}>
       {children}
     </RoleContext.Provider>

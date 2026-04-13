@@ -69,7 +69,7 @@ const MOCK_MAINTAINER_BOUNTIES: Issue[] = [
 ];
 
 export default function Home() {
-  const { role } = useRole();
+  const { role, registeredRepos } = useRole();
   const [bounties, setBounties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
@@ -154,9 +154,30 @@ export default function Home() {
           ))}
 
           {!isLoading && bounties.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-64 text-center p-8 opacity-50">
-               <Shield size={48} className="mb-4 text-muted-foreground" />
-               <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No active items</p>
+            <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+              {role === 'maintainer' && registeredRepos.length === 0 ? (
+                <>
+                  <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center text-accent mb-6">
+                    <Github size={32} />
+                  </div>
+                  <h3 className="text-lg font-black text-foreground uppercase tracking-tight mb-2">Connect Repository</h3>
+                  <p className="text-xs text-muted-foreground font-medium mb-6 leading-relaxed">You haven't linked any projects yet. Connect a GitHub repository to start launching bounties.</p>
+                  <Link 
+                    href="/maintainer/setup" 
+                    className="px-6 py-3 bg-foreground text-background rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Shield size={48} className="mb-4 text-muted-foreground opacity-20" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground opacity-50">No active items</p>
+                  {role === 'maintainer' && (
+                    <p className="text-[10px] text-muted-foreground font-medium mt-2">Launch a new bounty to see it here.</p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

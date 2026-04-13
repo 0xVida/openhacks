@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { getMaintainer } from '@/lib/store';
+import { getMaintainer, addMaintainerRepo } from '@/lib/store';
 
 export async function GET() {
   try {
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Repo name required' }, { status: 400 });
     }
 
-    const { addMaintainerRepo } = await import('@/lib/store');
     const login = (session.user as any).login || session.user.name;
+    console.log(`[API] Registering maintainer repo: ${repoFullName} for user: ${login}`);
     
     addMaintainerRepo(login, repoFullName);
 
