@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -30,7 +30,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         // Fetch profile from Supabase to add to session
         try {
-          const { data: profile } = await supabase
+          const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('*')
             .eq('username', (session.user as any).login || session.user.name)
@@ -53,8 +53,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const full_name = profile.name;
 
         try {
-          // Upsert profile in Supabase
-          const { error } = await supabase
+          // Upsert profile in Supabase using Admin to bypass RLS
+          const { error } = await supabaseAdmin
             .from('profiles')
             .upsert({
               id: user.id, // This comes from NextAuth's user object

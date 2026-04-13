@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Profile {
@@ -25,7 +25,7 @@ export interface Bounty {
 export const db = {
   // --- Profiles ---
   async getProfile(username: string): Promise<Profile | null> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('username', username)
@@ -39,7 +39,7 @@ export const db = {
     const profile = await this.getProfile(username);
     if (!profile) return;
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('profiles')
       .update({ reputation: (profile.reputation || 0) + amount })
       .eq('username', username);
@@ -49,7 +49,7 @@ export const db = {
 
   // --- Bounties ---
   async getBounties(): Promise<Bounty[]> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bounties')
       .select('*')
       .order('created_at', { ascending: false });
@@ -62,7 +62,7 @@ export const db = {
   },
 
   async addBounty(bounty: Omit<Bounty, 'id' | 'created_at'>) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bounties')
       .insert({
         ...bounty,
@@ -78,7 +78,7 @@ export const db = {
     
     // Reward maintainer with reputation
     if (bounty.maintainer_id) {
-       const { data: profile } = await supabase.from('profiles').select('username').eq('id', bounty.maintainer_id).single();
+       const { data: profile } = await supabaseAdmin.from('profiles').select('username').eq('id', bounty.maintainer_id).single();
        if (profile) {
          await this.updateReputation(profile.username, 10);
        }
@@ -88,7 +88,7 @@ export const db = {
   },
 
   async updateBountyStatus(id: string, status: Bounty['status'], contributorGithub?: string) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bounties')
       .update({ status })
       .eq('id', id)
@@ -109,7 +109,7 @@ export const db = {
   },
 
   async findBountyByIssue(repo: string, issueNumber: number): Promise<Bounty | null> {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bounties')
       .select('*')
       .eq('repo_fullname', repo)

@@ -8,3 +8,9 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || (!process.env.NEXT_PUBLIC_SUPABASE_
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Admin client for backend operations (bypasses RLS)
+export const supabaseAdmin = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+);
