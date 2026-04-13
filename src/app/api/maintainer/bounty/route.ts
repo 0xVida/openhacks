@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     // Safety check: ensure we have a Supabase UUID, not a GitHub ID string
     if (!maintainerId || !maintainerId.includes('-')) {
        console.log(`Maintainer ID ${maintainerId} is not a UUID, fetching from DB...`);
-       const { data: profile } = await db.getProfile((session.user as any).login || session.user.name);
+       const profile = await db.getProfile((session.user as any).login || session.user.name);
        if (profile) {
          maintainerId = profile.id;
        }
