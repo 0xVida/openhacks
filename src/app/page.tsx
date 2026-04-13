@@ -6,6 +6,7 @@ import { Filter, SortAsc, ArrowLeft, Plus, Code2, ExternalLink, Shield, Loader2 
 import IssueCard, { Issue } from '@/components/ui/IssueCard';
 import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
+import Github from '@/components/ui/GithubIcon';
 
 const MOCK_ISSUES: Issue[] = [
   {
