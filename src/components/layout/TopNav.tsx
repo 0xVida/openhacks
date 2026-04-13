@@ -35,18 +35,20 @@ export default function TopNav() {
   return (
     <nav className="h-14 md:h-16 border-b border-border-subtle bg-surface-low/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       <div className="flex items-center gap-4">
-        <Link href="/" className="md:hidden flex items-center gap-2.5">
-          <div className="w-8 h-8 relative shrink-0 rounded-xl overflow-hidden bg-surface-high shadow-sm shadow-accent/10 border border-border-subtle hover:scale-105 transition-transform">
-            <Image 
-              src="/openhacks.png" 
-              alt="OpenHacks Logo" 
-              fill 
-              sizes="32px"
-              className="object-cover" 
-            />
-          </div>
-          <span className="hidden sm:block text-sm font-black italic uppercase tracking-tighter text-foreground">OpenHacks</span>
-        </Link>
+        <div className="md:hidden">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 relative shrink-0 rounded-xl overflow-hidden bg-surface-high shadow-sm shadow-accent/10 border border-border-subtle hover:scale-105 transition-transform">
+              <Image 
+                src="/openhacks.png" 
+                alt="OpenHacks Logo" 
+                fill 
+                sizes="32px"
+                className="object-cover" 
+              />
+            </div>
+            <span className="hidden sm:block text-sm font-black italic uppercase tracking-tighter text-foreground">OpenHacks</span>
+          </Link>
+        </div>
         
         <div className="hidden md:flex items-center gap-2 text-foreground">
           <span className="text-sm font-black uppercase tracking-tight text-accent">

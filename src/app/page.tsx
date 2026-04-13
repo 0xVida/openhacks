@@ -9,7 +9,7 @@ import { useRole } from '@/components/providers/role-context';
 import Github from '@/components/ui/GithubIcon';
 
 export default function Home() {
-  const { role, registeredRepos } = useRole();
+  const { role, registeredRepos, githubUser } = useRole();
   const [bounties, setBounties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
@@ -81,7 +81,7 @@ export default function Home() {
             description: b.description,
             repo: b.repo_fullname.split('/')[1] || b.repo_fullname,
             repoFullName: b.repo_fullname,
-            issue_number: b.issue_number,
+            issueNumber: b.issue_number,
             author: b.repo_fullname.split('/')[0],
             points: b.reward_amount,
             reward: b.reward_amount,
