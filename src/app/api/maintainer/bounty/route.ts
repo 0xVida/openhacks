@@ -39,6 +39,17 @@ export async function POST(request: Request) {
     }
 
     // 2. Add to Supabase
+    let maintainerId = (session.user as any).id;
+    
+    // Safety check: ensure we have a Supabase UUID, not a GitHub ID string
+    if (!maintainerId || !maintainerId.includes('-')) {
+       console.log(`Maintainer ID ${maintainerId} is not a UUID, fetching from DB...`);
+       const { data: profile } = await db.getProfile((session.user as any).login || session.user.name);
+       if (profile) {
+         maintainerId = profile.id;
+       }
+    }
+
     const newBounty = await db.addBounty({
       title,
       description,
@@ -46,7 +57,7 @@ export async function POST(request: Request) {
       issue_number: parseInt(issueNumber, 10),
       reward_amount: parseFloat(reward),
       status: 'open',
-      maintainer_id: (session.user as any).id
+      maintainer_id: maintainerId
     });
 
     return NextResponse.json({

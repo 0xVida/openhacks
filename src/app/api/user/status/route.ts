@@ -18,7 +18,7 @@ export async function GET() {
     const login = (session.user as any).login || session.user.name;
     
     // Fetch profile from Supabase
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('username', login)

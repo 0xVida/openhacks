@@ -1,6 +1,10 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import { supabaseAdmin } from "@/lib/supabase";
+import { v5 as uuidv5 } from 'uuid';
+
+// Deterministic namespace for GitHub IDs -> UUIDs
+const GITHUB_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // Using DNS namespace as base
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -31,16 +35,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.login = user.login || (profile as any)?.login;
       }
+      if (account) {
+        token.accessToken = account.access_token;
+      }
       return token;
     },
     async session({ session, token }: any) {
+      if (token.accessToken) {
+        (session as any).accessToken = token.accessToken;
+      }
       if (session.user) {
         const login = token.login || (session.user as any).login || session.user.name;
         (session.user as any).login = login;
         
         // Fetch the REAL Supabase UUID for this profile
         try {
-          const { data: profile } = await supabaseAdmin
+          const { data: profile, error } = await supabaseAdmin
             .from('profiles')
             .select('id, reputation')
             .eq('username', login)
@@ -49,6 +59,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (profile) {
             (session.user as any).id = profile.id; // Map to Supabase UUID
             (session.user as any).reputation = profile.reputation;
+          } else {
+             console.warn(`No profile found for login: ${login}`);
           }
         } catch (e) {
           console.error("Session profile sync error:", e);
@@ -61,33 +73,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const username = githubProfile.login;
         const avatar_url = githubProfile.avatar_url;
         const full_name = githubProfile.name;
+        
+        // Generate a valid UUID from the numeric GitHub ID
+        const supabaseId = uuidv5(user.id, GITHUB_NAMESPACE);
 
         try {
-          // Check if profile exists by username
+          // Check if profile exists by username (legacy sync) or supabaseId
           const { data: existingProfile } = await supabaseAdmin
             .from('profiles')
             .select('id')
-            .eq('username', username)
-            .single();
+            .or(`username.eq.${username},id.eq.${supabaseId}`)
+            .maybeSingle();
 
           if (existingProfile) {
             // Update existing
-            await supabaseAdmin
+            const { error: updateError } = await supabaseAdmin
               .from('profiles')
               .update({
                 avatar_url,
                 full_name,
                 updated_at: new Date().toISOString()
               })
-              .eq('username', username);
+              .eq('id', existingProfile.id);
+            
+            if (updateError) console.error("Error updating profile:", updateError);
           } else {
-            // Create new - Note: If id references auth.users and is UUID, 
-            // and we don't have a supabase auth user, this might fail.
-            // We use gen_random_uuid() if the ID field allows it, 
-            // or we omit it if it's auto-generated.
+            // Create new
             const { error: insertError } = await supabaseAdmin
               .from('profiles')
               .insert({
+                id: supabaseId,
                 username,
                 email: user.email,
                 avatar_url,
@@ -96,9 +111,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               });
             
             if (insertError) {
-               console.error("Error creating profile:", insertError);
-               // If it fails because of the auth.users FK, we can't do much without a schema change
-               // but we'll log it clearly for the user.
+               console.error("CRITICAL: Error creating profile in Supabase. Check if you dropped the fkey constraint as requested:", insertError);
             }
           }
         } catch (e) {
