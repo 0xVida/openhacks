@@ -7,6 +7,7 @@ import IssueCard, { Issue } from '@/components/ui/IssueCard';
 import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
 import Github from '@/components/ui/GithubIcon';
+import SuccessModal from '@/components/ui/SuccessModal';
 
 export default function Home() {
   const { role, registeredRepos, githubUser } = useRole();
@@ -16,7 +17,6 @@ export default function Home() {
   const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [mounted, setMounted] = useState(false);
   
-  // Resizable sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
 
@@ -245,7 +245,6 @@ export default function Home() {
            )}
         </div>
       </div>
-    </div>
+    </RootContainer>
   );
 }
-
