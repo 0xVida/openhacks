@@ -8,6 +8,7 @@ import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
 import Github from '@/components/ui/GithubIcon';
 import SuccessModal from '@/components/ui/SuccessModal';
+import RootContainer from '@/components/layout/RootContainer';
 
 export default function Home() {
   const { role, registeredRepos, githubUser } = useRole();
@@ -124,6 +125,7 @@ export default function Home() {
   };
 
   return (
+    <RootContainer>
     <div className="flex flex-1 h-full overflow-hidden relative">
       <div 
         style={mounted ? { width: `${sidebarWidth}px` } : {}}
@@ -245,6 +247,7 @@ export default function Home() {
            )}
         </div>
       </div>
+    </div>
     </RootContainer>
   );
 }
