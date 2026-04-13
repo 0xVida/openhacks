@@ -3,7 +3,8 @@
 import React from 'react';
 import { Settings } from 'lucide-react';
 
-import { Settings as SettingsIcon, LogOut, Github, Shield, Bell, User as UserIcon } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, Shield, Bell, User as UserIcon } from 'lucide-react';
+import Github from '@/components/ui/GithubIcon';
 import { useRole } from '@/components/providers/role-context';
 import { signOut } from 'next-auth/react';
 

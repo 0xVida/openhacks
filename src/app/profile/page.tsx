@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { User } from 'lucide-react';
+import { useRole } from '@/components/providers/role-context';
 
 export default function ProfilePage() {
   const { githubUser, role } = useRole();

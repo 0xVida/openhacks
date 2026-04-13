@@ -36,7 +36,7 @@ export const db = {
   },
 
   async updateReputation(username: string, amount: number) {
-    const { data: profile } = await this.getProfile(username);
+    const profile = await this.getProfile(username);
     if (!profile) return;
 
     const { error } = await supabase

@@ -8,67 +8,6 @@ import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
 import Github from '@/components/ui/GithubIcon';
 
-const MOCK_ISSUES: Issue[] = [
-  {
-    id: '750',
-    title: 'repl/executor: call_function storage diff always uses an empty filter list',
-    description: 'The StorageInspector::compute_diff function currently passes an empty key-filter slice.',
-    repo: 'soroban-debugger',
-    author: 'IfeDev1',
-    points: 200,
-    reward: 200,
-    status: 'closed',
-    labels: ['Rust', 'Debugger']
-  },
-  {
-    id: '742',
-    title: 'error_db: unknown error codes print to stdout instead of logging',
-    description: 'Error database is failing to log unknown error codes correctly.',
-    repo: 'soroban-debugger',
-    author: 'IfeDev1',
-    points: 150,
-    reward: 150,
-    status: 'closed',
-    labels: ['Bug', 'Refactor']
-  },
-  {
-    id: '414',
-    title: 'Bet Confirmation Modal with Pre-Submit Summary',
-    description: 'Add a summary view to the bet confirmation modal.',
-    repo: 'stellar-polymarket',
-    author: 'Hahfyeex',
-    points: 200,
-    reward: 200,
-    status: 'closed',
-    labels: ['UI/UX', 'React']
-  }
-];
-
-const MOCK_MAINTAINER_BOUNTIES: Issue[] = [
-  {
-    id: '101',
-    title: 'Optimizing data structures for scale',
-    description: 'Refactor the core data structures to handle millions of entries.',
-    repo: 'openhacks-core',
-    author: 'Admin',
-    points: 1000,
-    reward: 1000,
-    status: 'open',
-    labels: ['Critical', 'Backend']
-  },
-  {
-    id: '102',
-    title: 'Implement Dark Mode transition micro-animations',
-    description: 'Add smooth CSS transitions for theme switching.',
-    repo: 'openhacks-ui',
-    author: 'Admin',
-    points: 300,
-    reward: 300,
-    status: 'open',
-    labels: ['UI', 'Animation']
-  }
-];
-
 export default function Home() {
   const { role, registeredRepos } = useRole();
   const [bounties, setBounties] = useState<any[]>([]);

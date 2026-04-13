@@ -8,7 +8,9 @@ export interface Issue {
   title: string;
   description: string;
   repo: string;
+  repoFullName: string;
   author: string;
+  issueNumber: number;
   points: number;
   reward: number;
   status: 'closed' | 'open' | 'processing' | 'paid' | 'merged';
