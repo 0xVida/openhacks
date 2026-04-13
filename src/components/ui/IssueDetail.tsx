@@ -39,7 +39,7 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
          </div>
          <div className="text-right">
             <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">Reward</p>
-            <p className="text-sm font-black text-accent tracking-tight">{issue.reward} Pts</p>
+            <p className="text-sm font-black text-accent tracking-tight">{issue.reward} USDC</p>
          </div>
       </div>
 
@@ -52,11 +52,16 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
         </div>
         
         <div className="flex flex-wrap items-center gap-6 mb-10 pb-10 border-b border-border-subtle">
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-surface-high border border-border-subtle hover:border-accent/40 transition-colors cursor-pointer group">
+          <a 
+            href={`https://github.com/${issue.repoFullName}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-surface-high border border-border-subtle hover:border-accent/40 transition-colors cursor-pointer group no-underline"
+          >
             <Building2 size={16} className="text-muted-foreground group-hover:text-accent transition-colors" />
             <span className="text-sm font-semibold text-foreground/90">{issue.repoFullName || issue.repo}</span>
             <ExternalLink size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+          </a>
           
           <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
              <Clock size={16} />
@@ -97,7 +102,7 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
                     <Award size={32} />
                  </div>
                  <span className="text-3xl font-black text-foreground">{issue.reward}</span>
-                 <span className="text-[10px] font-black text-accent uppercase tracking-widest">USDC Credits</span>
+                 <span className="text-[10px] font-black text-accent uppercase tracking-widest">USDC</span>
               </div>
            </div>
            

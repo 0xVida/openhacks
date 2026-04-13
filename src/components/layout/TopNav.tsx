@@ -33,26 +33,22 @@ export default function TopNav() {
   const { role, setRole, githubUser } = useRole();
 
   return (
-    <nav className="h-16 border-b border-border-subtle bg-surface-low/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
+    <nav className="h-14 md:h-16 border-b border-border-subtle bg-surface-low/80 backdrop-blur-md flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       <div className="flex items-center gap-4">
-        <button 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden p-2 hover:bg-surface-high rounded-lg transition-colors text-foreground"
-        >
-          {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <Link href="/" className="md:hidden flex items-center gap-2.5">
+          <div className="w-8 h-8 relative shrink-0 rounded-xl overflow-hidden bg-surface-high shadow-sm shadow-accent/10 border border-border-subtle hover:scale-105 transition-transform">
+            <Image 
+              src="/openhacks.png" 
+              alt="OpenHacks Logo" 
+              fill 
+              sizes="32px"
+              className="object-cover" 
+            />
+          </div>
+          <span className="hidden sm:block text-sm font-black italic uppercase tracking-tighter text-foreground">OpenHacks</span>
+        </Link>
         
-        <div className="md:hidden w-8 h-8 relative shrink-0 rounded-xl overflow-hidden bg-surface-high shadow-sm shadow-accent/10">
-          <Image 
-            src="/openhacks.png" 
-            alt="OpenHacks Logo" 
-            fill 
-            sizes="32px"
-            className="object-cover" 
-          />
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-foreground">
+        <div className="hidden md:flex items-center gap-2 text-foreground">
           <span className="text-sm font-black uppercase tracking-tight text-accent">
             {role === 'contributor' ? 'Contributor' : 'Maintainer'}
           </span>
@@ -174,37 +170,6 @@ export default function TopNav() {
       </div>
 
 
-      {isMenuOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-surface-low border-b border-border-subtle p-4 md:hidden animate-in slide-in-from-top-2 duration-200 z-50 overflow-y-auto max-h-[calc(100vh-4rem)] shadow-2xl">
-          <div className="flex flex-col gap-1">
-            {role === 'contributor' && (
-              <div className="flex items-center justify-between p-4 mb-2 bg-accent/5 rounded-2xl border border-accent/10">
-                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center text-accent">
-                       <Trophy size={20} />
-                    </div>
-                    <div>
-                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">My Points</p>
-                       <p className="text-xl font-black text-foreground">1,400</p>
-                    </div>
-                 </div>
-                 <div className="px-3 py-1 bg-accent text-white rounded-lg text-[10px] font-black uppercase tracking-tight">
-                    Top 5%
-                 </div>
-              </div>
-            )}
-
-            <MobileMenuItem icon={<LayoutDashboard size={18} />} label="Dashboard" href="/" onClick={() => setIsMenuOpen(false)} />
-            <MobileMenuItem icon={<Boxes size={18} />} label="Projects" href="/projects" onClick={() => setIsMenuOpen(false)} />
-            
-            <hr className="my-2 border-border-subtle" />
-            
-            <MobileMenuItem icon={<User size={18} />} label="My Profile" href="/profile" onClick={() => setIsMenuOpen(false)} />
-            <MobileMenuItem icon={<Settings size={18} />} label="Settings" href="/settings" onClick={() => setIsMenuOpen(false)} />
-            <MobileMenuItem icon={<LogOut size={18} />} label="Sign Out" href="/" onClick={() => setIsMenuOpen(false)} />
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
