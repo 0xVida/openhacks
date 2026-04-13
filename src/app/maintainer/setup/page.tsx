@@ -16,7 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useRole } from '@/components/providers/role-context';
-import RootContainer from '@/components/layout/RootContainer';
+
 
 function MaintainerSetupContent() {
   const router = useRouter();
@@ -120,7 +120,7 @@ function MaintainerSetupContent() {
   }
 
   return (
-    <RootContainer>
+    <>
       <div className="flex-1 bg-surface-low overflow-y-auto p-6 md:p-12">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-12">
@@ -259,18 +259,16 @@ function MaintainerSetupContent() {
           )}
         </div>
       </div>
-    </RootContainer>
+    </>
   );
 }
 
 export default function MaintainerSetupPage() {
   return (
     <Suspense fallback={
-      <RootContainer>
         <div className="flex-1 bg-surface-low flex items-center justify-center">
           <Loader2 className="animate-spin text-accent" size={48} />
         </div>
-      </RootContainer>
     }>
       <MaintainerSetupContent />
     </Suspense>

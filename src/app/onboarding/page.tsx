@@ -4,7 +4,7 @@ import React from 'react';
 import { signIn } from 'next-auth/react';
 import { ArrowRight, ShieldCheck, Zap, Globe } from 'lucide-react';
 import Github from '@/components/ui/GithubIcon';
-import RootContainer from '@/components/layout/RootContainer';
+
 
 export default function OnboardingPage() {
   const handleGithubLogin = () => {
@@ -12,7 +12,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <RootContainer>
+    <>
       <div className="flex-1 bg-surface-low overflow-y-auto flex items-center justify-center p-6">
         <div className="max-w-xl w-full">
           <div className="text-center mb-12">
@@ -55,7 +55,7 @@ export default function OnboardingPage() {
           </p>
         </div>
       </div>
-    </RootContainer>
+    </>
   );
 }
 

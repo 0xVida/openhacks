@@ -19,11 +19,9 @@ import {
   ThumbsUp,
   XCircle
 } from 'lucide-react';
-import RootContainer from '@/components/layout/RootContainer';
-
 export default function ApplicationDetailPage() {
   return (
-    <RootContainer>
+    <>
       <div className="flex-1 bg-surface-low overflow-y-auto">
         <div className="max-w-5xl mx-auto p-4 md:p-12">
           {/* Header */}
@@ -158,6 +156,6 @@ export default function ApplicationDetailPage() {
           </div>
         </div>
       </div>
-    </RootContainer>
+    </>
   );
 }

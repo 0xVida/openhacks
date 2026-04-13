@@ -20,7 +20,6 @@ import {
   Search
 } from 'lucide-react';
 import { useRole } from '@/components/providers/role-context';
-import RootContainer from '@/components/layout/RootContainer';
 import SuccessModal from '@/components/ui/SuccessModal';
 
 type BountyType = 'issue';
@@ -34,6 +33,7 @@ export default function CreateBountyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isError, setIsError] = useState(false);
   const [successData, setSuccessData] = useState<{ title: string, message: string }>({ title: '', message: '' });
 
   // Repos & Issues State
@@ -97,7 +97,12 @@ export default function CreateBountyPage() {
 
   const handleLaunchBounty = async () => {
     if (!title || !description || !repo || !issueNumber || !reward) {
-      alert('Please fill in all required fields.');
+      setSuccessData({
+        title: "Incomplete Form",
+        message: "Please fill in all required fields including the bounty amount and issue details before launching."
+      });
+      setIsError(true);
+      setShowSuccess(true);
       return;
     }
 
@@ -124,20 +129,31 @@ export default function CreateBountyPage() {
           title: "Bounty Launched",
           message: "The bounty has been successfully created and the funds are now secured in the project's escrow account."
         });
+        setIsError(false);
         setShowSuccess(true);
       } else {
-        alert(`Failed to launch bounty: ${result.error || result.message}`);
+        setSuccessData({
+          title: "Launch Failed",
+          message: result.error || result.message || "An error occurred while creating the bounty. Please check your balance and try again."
+        });
+        setIsError(true);
+        setShowSuccess(true);
       }
     } catch (error) {
       console.error('Error launching bounty:', error);
-      alert('An unexpected error occurred. Please try again.');
+      setSuccessData({
+        title: "System Error",
+        message: "We encountered a technical issue while processing your request. Please try again or contact support if the problem persists."
+      });
+      setIsError(true);
+      setShowSuccess(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <RootContainer>
+    <>
       <div className="flex-1 bg-surface-low overflow-y-auto">
         <div className="max-w-4xl mx-auto p-6 md:p-12 lg:p-16">
           <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-10 group">
@@ -363,16 +379,19 @@ export default function CreateBountyPage() {
         isOpen={showSuccess}
         onClose={() => {
           setShowSuccess(false);
-          setTitle('');
-          setDescription('');
-          setIssueNumber('');
-          setReward('');
+          if (!isError) {
+            setTitle('');
+            setDescription('');
+            setIssueNumber('');
+            setReward('');
+          }
         }}
         title={successData.title}
         message={successData.message}
+        isError={isError}
         actionHref="/"
         actionText="Dashboard"
       />
-    </RootContainer>
+    </>
   );
 }
