@@ -81,7 +81,7 @@ export default function Home() {
             description: b.description,
             repo: b.repo_fullname.split('/')[1] || b.repo_fullname,
             repoFullName: b.repo_fullname,
-            issueNumber: b.issue_number,
+            issueNumber: !isNaN(parseInt(String(b.issue_number))) ? parseInt(String(b.issue_number)) : 0,
             author: b.repo_fullname.split('/')[0],
             points: b.reward_amount,
             reward: b.reward_amount,
@@ -121,7 +121,7 @@ export default function Home() {
   return (
     <div className="flex flex-1 h-full overflow-hidden relative">
       <div 
-        style={{ width: showMobileDetail ? '100%' : (typeof window !== 'undefined' && window.innerWidth < 1024 ? '100%' : `${sidebarWidth}px`) }}
+        style={{ width: (typeof window !== 'undefined' && window.innerWidth >= 1024) ? `${sidebarWidth}px` : '100%' }}
         className={`
           ${showMobileDetail ? 'hidden lg:flex' : 'flex'} 
           ${isResizing ? '' : 'transition-[width] duration-300'}

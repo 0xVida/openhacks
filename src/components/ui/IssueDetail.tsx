@@ -46,7 +46,7 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
       <div className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-12">
         <div className="flex flex-col gap-2 mb-8">
           <div className="flex flex-col md:flex-row md:items-start gap-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-muted-foreground shrink-0 opacity-50">#{issue.issueNumber || issue.id}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-muted-foreground shrink-0 opacity-50">#{issue.issueNumber}</h2>
             <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight tracking-tight">{issue.title}</h1>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useRole } from '@/components/providers/role-context';
 import RootContainer from '@/components/layout/RootContainer';
+import SuccessModal from '@/components/ui/SuccessModal';
 
 type BountyType = 'issue';
 type ExecutionMode = 'open' | 'proposal';
@@ -32,6 +33,8 @@ export default function CreateBountyPage() {
   const [mode, setMode] = useState<ExecutionMode>('proposal');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successData, setSuccessData] = useState<{title: string, message: string}>({ title: '', message: '' });
 
   // Repos & Issues State
   const [repos, setRepos] = useState<any[]>([]);
@@ -117,8 +120,11 @@ export default function CreateBountyPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Bounty launched successfully! Funds are now locked in escrow.');
-        router.push('/');
+        setSuccessData({
+          title: "Bounty Launched",
+          message: "The bounty has been successfully created and the funds are now secured in the project's escrow account."
+        });
+        setShowSuccess(true);
       } else {
         alert(`Failed to launch bounty: ${result.error || result.message}`);
       }
@@ -355,6 +361,20 @@ export default function CreateBountyPage() {
           </div>
         </div>
       </div>
+      <SuccessModal 
+        isOpen={showSuccess}
+        onClose={() => {
+           setShowSuccess(false);
+           setTitle('');
+           setDescription('');
+           setIssueNumber('');
+           setReward('');
+        }}
+        title={successData.title}
+        message={successData.message}
+        actionHref="/"
+        actionText="Back to Dashboard"
+      />
     </RootContainer>
   );
 }
