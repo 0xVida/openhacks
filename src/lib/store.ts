@@ -66,3 +66,57 @@ export function updateBountyStatus(id: string, status: Bounty['status'], contrib
   }
   return undefined;
 }
+
+// Maintainers Management
+export interface Maintainer {
+  login: string;
+  repos: string[]; // List of full names i.e. "owner/repo"
+}
+
+const MAINTAINERS_FILE = path.join(process.cwd(), 'src/data/maintainers.json');
+
+// Ensure maintainers file exists
+if (!fs.existsSync(MAINTAINERS_FILE)) {
+  fs.writeFileSync(MAINTAINERS_FILE, JSON.stringify([]));
+}
+
+export function getMaintainers(): Maintainer[] {
+  try {
+    const data = fs.readFileSync(MAINTAINERS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Error reading maintainers data:', e);
+    return [];
+  }
+}
+
+export function saveMaintainers(maintainers: Maintainer[]) {
+  try {
+    fs.writeFileSync(MAINTAINERS_FILE, JSON.stringify(maintainers, null, 2));
+  } catch (e) {
+    console.error('Error saving maintainers data:', e);
+  }
+}
+
+export function addMaintainerRepo(login: string, repoFullName: string) {
+  const maintainers = getMaintainers();
+  const index = maintainers.findIndex(m => m.login.toLowerCase() === login.toLowerCase());
+  
+  if (index !== -1) {
+    if (!maintainers[index].repos.includes(repoFullName)) {
+      maintainers[index].repos.push(repoFullName);
+    }
+  } else {
+    maintainers.push({
+      login: login.toLowerCase(),
+      repos: [repoFullName]
+    });
+  }
+  
+  saveMaintainers(maintainers);
+}
+
+export function getMaintainer(login: string): Maintainer | undefined {
+  const maintainers = getMaintainers();
+  return maintainers.find(m => m.login.toLowerCase() === login.toLowerCase());
+}

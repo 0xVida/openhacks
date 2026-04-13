@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import Github from '@/components/ui/GithubIcon';
 
+import { signIn, signOut } from 'next-auth/react';
+
 export default function TopNav() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { role, setRole, githubUser } = useRole();
@@ -39,7 +41,6 @@ export default function TopNav() {
         >
           {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
-        
         
         <div className="md:hidden w-8 h-8 relative shrink-0 rounded-xl overflow-hidden bg-surface-high shadow-sm shadow-accent/10">
           <Image 
@@ -89,47 +90,46 @@ export default function TopNav() {
             </div>
           )}
 
-
-          <div className="relative flex items-center bg-surface-high/50 backdrop-blur-sm p-1 rounded-2xl border border-border-subtle overflow-hidden ml-2">
-            <div 
-              className={`absolute top-1 bottom-1 w-9 bg-accent rounded-xl transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-lg shadow-accent/20 ${
-                role === 'contributor' ? 'left-1' : 'left-[41px]'
-              }`}
-            />
-            
-            <button 
-              onClick={() => setRole('contributor')}
-              className={`relative z-10 w-9 h-9 flex items-center justify-center rounded-xl transition-colors duration-300 ${
-                role === 'contributor' ? 'text-white dark:text-black' : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title="Contributor Mode"
-            >
-              <User size={18} strokeWidth={2.5} />
-            </button>
-            
-            <button 
-              onClick={() => setRole('maintainer')}
-              className={`relative z-10 w-9 h-9 flex items-center justify-center rounded-xl transition-colors duration-300 ${
-                role === 'maintainer' ? 'text-white dark:text-black' : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title="Owner Mode"
-            >
-              <Crown size={18} strokeWidth={2.5} />
-            </button>
-          </div>
-
-          {!githubUser && role === 'maintainer' && (
-            <Link 
-              href="/onboarding"
-              className="hidden md:flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-xl font-black text-xs transition-all hover:scale-105 active:scale-95 ml-2"
-            >
-              <Github size={14} />
-              CONNECT GITHUB
-            </Link>
+          {githubUser && (
+            <div className="relative flex items-center bg-surface-high/50 backdrop-blur-sm p-1 rounded-2xl border border-border-subtle overflow-hidden ml-2">
+              <div 
+                className={`absolute top-1 bottom-1 w-9 bg-accent rounded-xl transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-lg shadow-accent/20 ${
+                  role === 'contributor' ? 'left-1' : 'left-[41px]'
+                }`}
+              />
+              
+              <button 
+                onClick={() => setRole('contributor')}
+                className={`relative z-10 w-9 h-9 flex items-center justify-center rounded-xl transition-colors duration-300 ${
+                  role === 'contributor' ? 'text-white dark:text-black' : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Contributor Mode"
+              >
+                <User size={18} strokeWidth={2.5} />
+              </button>
+              
+              <button 
+                onClick={() => setRole('maintainer')}
+                className={`relative z-10 w-9 h-9 flex items-center justify-center rounded-xl transition-colors duration-300 ${
+                  role === 'maintainer' ? 'text-white dark:text-black' : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Owner Mode"
+              >
+                <Crown size={18} strokeWidth={2.5} />
+              </button>
+            </div>
           )}
 
-          {githubUser && (
-            <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-border-subtle">
+          {!githubUser ? (
+            <button 
+              onClick={() => signIn('github')}
+              className="px-4 py-2 bg-foreground text-background rounded-xl font-black text-xs transition-all hover:scale-105 active:scale-95 ml-2 flex items-center gap-2"
+            >
+              <Github size={14} />
+              SIGN IN
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border-subtle group relative cursor-pointer" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                <div className="w-8 h-8 rounded-lg overflow-hidden border border-accent/20">
                   <img src={githubUser.avatar_url} alt={githubUser.login} className="w-full h-full object-cover" />
                </div>

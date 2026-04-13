@@ -63,7 +63,18 @@ export default function MaintainerSetupPage() {
     }, 2000);
   };
 
-  const finalizeSetup = () => {
+  const finalizeSetup = async () => {
+    if (selectedRepo) {
+      try {
+        await fetch('/api/user/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repoFullName: selectedRepo })
+        });
+      } catch (error) {
+        console.error('Error registering repo:', error);
+      }
+    }
     router.push('/');
   };
 

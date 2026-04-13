@@ -28,19 +28,39 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
   const [githubUser, setGithubUser] = useState<GithubUser | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
 
-  // Sync with Auth.js session
+  // Sync with Auth.js session and backend status
   useEffect(() => {
-    if (session?.user) {
-      setGithubUser({
-        login: (session.user as any).login || session.user.name || 'user',
-        name: session.user.name || '',
-        avatar_url: session.user.image || ''
-      });
-      setRole('maintainer'); // Default to maintainer if logged in for this flow
-    } else {
-      setGithubUser(null);
+    async function syncUserStatus() {
+      if (session?.user) {
+        setGithubUser({
+          login: (session.user as any).login || session.user.name || 'user',
+          name: session.user.name || '',
+          avatar_url: session.user.image || ''
+        });
+
+        // Fetch real role from backend
+        try {
+          const res = await fetch('/api/user/status');
+          const data = await res.json();
+          if (data.success) {
+            setRole(data.role);
+          } else {
+            setRole('contributor');
+          }
+        } catch (error) {
+          console.error('Error syncing user status:', error);
+          setRole('contributor');
+        }
+      } else {
+        setGithubUser(null);
+        setRole('contributor');
+      }
     }
-  }, [session]);
+    
+    if (status !== 'loading') {
+      syncUserStatus();
+    }
+  }, [session, status]);
 
   return (
     <RoleContext.Provider value={{ 
