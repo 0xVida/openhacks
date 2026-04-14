@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useRole } from '@/components/providers/role-context';
+import AgentOnboardingModal from '@/components/ui/AgentOnboardingModal';
 
 
 function MaintainerSetupContent() {
@@ -27,6 +28,8 @@ function MaintainerSetupContent() {
   const [isInstalling, setIsInstalling] = useState(false);
   const [realRepos, setRealRepos] = useState<any[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(true);
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [generatedKey, setGeneratedKey] = useState('');
 
   // Constants
   const GITHUB_APP_SLUG = "openhacks-by-0xvida";
@@ -38,9 +41,30 @@ function MaintainerSetupContent() {
     
     if (installationId) {
       if (savedRepo) setSelectedRepo(savedRepo);
-      setStep(3);
+      // Automatically trigger registration
+      handleRegisterRepo(savedRepo || '');
     }
   }, [searchParams, setSelectedRepo]);
+
+  const handleRegisterRepo = async (repo: string) => {
+    if (!repo) return;
+    try {
+      const res = await fetch('/api/user/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoFullName: repo })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGeneratedKey(data.api_key);
+        setStep(3);
+        setShowAgentModal(true);
+        localStorage.removeItem('openhacks_setup_repo');
+      }
+    } catch (error) {
+      console.error('Error registering repo:', error);
+    }
+  };
 
   React.useEffect(() => {
     async function fetchRepos() {
@@ -80,7 +104,7 @@ function MaintainerSetupContent() {
 
       if (existingInstallation) {
         console.log("Existing installation found for:", owner);
-        setStep(3); // Skip to Success step
+        await handleRegisterRepo(repo);
         return;
       }
     } catch (error) {
@@ -98,19 +122,7 @@ function MaintainerSetupContent() {
     window.location.assign(installUrl);
   };
 
-  const finalizeSetup = async () => {
-    if (selectedRepo) {
-      try {
-        await fetch('/api/user/status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ repoFullName: selectedRepo })
-        });
-        localStorage.removeItem('openhacks_setup_repo');
-      } catch (error) {
-        console.error('Error registering repo:', error);
-      }
-    }
+  const finalizeSetup = () => {
     router.push('/');
   };
 
@@ -259,6 +271,17 @@ function MaintainerSetupContent() {
           )}
         </div>
       </div>
+
+      {showAgentModal && selectedRepo && (
+        <AgentOnboardingModal 
+          apiKey={generatedKey} 
+          repoName={selectedRepo}
+          onClose={() => {
+            setShowAgentModal(false);
+            finalizeSetup();
+          }}
+        />
+      )}
     </>
   );
 }

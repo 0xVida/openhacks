@@ -77,11 +77,19 @@ export async function POST(req: Request) {
       currentRepos.push(repoFullName);
     }
 
+    // Auto-generate API key if missing
+    let apiKey = profile.api_key;
+    if (!apiKey) {
+      const { v4: uuidv4 } = await import('uuid');
+      apiKey = `oh_${uuidv4().replace(/-/g, '')}`;
+    }
+
     // Update profile
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('profiles')
       .update({
         role: 'maintainer',
+        api_key: apiKey,
         metadata: { ...profile.metadata, repos: currentRepos }
       })
       .eq('username', login);
@@ -90,6 +98,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
+      api_key: apiKey,
       message: 'Maintainer repository registered successfully'
     });
   } catch (error) {

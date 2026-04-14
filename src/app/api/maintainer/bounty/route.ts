@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     // 1. Ownership Hijacking Check
     const { checkRepoAccess } = await import('@/lib/github');
-    const hasAccess = await checkRepoAccess(repo, user.username);
+    const hasAccess = await checkRepoAccess(repo, user.login);
     if (!hasAccess) {
       return NextResponse.json(
         { success: false, error: `You do not have write access to ${repo}. Only maintainers can create bounties.` },

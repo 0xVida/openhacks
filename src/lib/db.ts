@@ -25,18 +25,18 @@ export interface Bounty {
   funding_status?: 'unfunded' | 'funded';
   locus_session_id?: string;
   locus_webhook_secret?: string;
+  funded_at?: string;
   created_at?: string;
 }
 
 export const db = {
-  // --- Profiles ---
   async getProfile(username: string): Promise<Profile | null> {
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('username', username)
       .single();
-    
+
     if (error) return null;
     return data;
   },
@@ -47,7 +47,7 @@ export const db = {
       .select('*')
       .eq('api_key', apiKey)
       .single();
-    
+
     if (error) return null;
     return data;
   },
@@ -57,7 +57,7 @@ export const db = {
       .from('profiles')
       .update({ api_key: apiKey })
       .eq('id', id);
-    
+
     if (error) console.error('Error updating API key:', error);
   },
 
@@ -69,7 +69,7 @@ export const db = {
       .from('profiles')
       .update({ reputation: (profile.reputation || 0) + amount })
       .eq('username', username);
-    
+
     if (error) console.error('Error updating reputation:', error);
   },
 
@@ -79,7 +79,7 @@ export const db = {
       .from('bounties')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching bounties:', error);
       return [];
@@ -96,18 +96,18 @@ export const db = {
       })
       .select()
       .single();
-    
+
     if (error) {
-       console.error('Error adding bounty:', error);
-       return null;
+      console.error('Error adding bounty:', error);
+      return null;
     }
-    
+
     // Reward maintainer with reputation
     if (bounty.maintainer_id) {
-       const { data: profile } = await supabaseAdmin.from('profiles').select('username').eq('id', bounty.maintainer_id).single();
-       if (profile) {
-         await this.updateReputation(profile.username, 10);
-       }
+      const { data: profile } = await supabaseAdmin.from('profiles').select('username').eq('id', bounty.maintainer_id).single();
+      if (profile) {
+        await this.updateReputation(profile.username, 10);
+      }
     }
 
     return data;
@@ -120,7 +120,7 @@ export const db = {
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) {
       console.error('Error updating bounty status:', error);
       return null;
@@ -141,7 +141,7 @@ export const db = {
       .eq('repo_fullname', repo)
       .eq('issue_number', issueNumber)
       .single();
-    
+
     if (error) return null;
     return data;
   },
