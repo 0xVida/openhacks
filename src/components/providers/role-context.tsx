@@ -11,6 +11,7 @@ interface GithubUser {
   name: string;
   avatar_url: string;
   reputation?: number;
+  api_key?: string;
 }
 
 interface RoleContextType {
@@ -69,7 +70,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
             setRegisteredRepos(data.repos || []);
             // Update reputation if backend has more recent data
             if (data.reputation !== undefined) {
-              setGithubUser(prev => prev ? { ...prev, reputation: data.reputation } : null);
+              setGithubUser(prev => prev ? { ...prev, reputation: data.reputation, api_key: data.api_key } : null);
             }
             // Only force 'maintainer' if they have repos AND no role was saved yet
             const savedRole = localStorage.getItem('openhacks_active_role');

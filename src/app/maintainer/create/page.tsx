@@ -29,7 +29,7 @@ export default function CreateBountyPage() {
   const router = useRouter();
   const { githubUser, selectedRepo: contextRepo } = useRole();
   const [type, setType] = useState<BountyType>('issue');
-  const [mode, setMode] = useState<ExecutionMode>('proposal');
+  const [mode, setMode] = useState<ExecutionMode>('open');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -281,55 +281,31 @@ export default function CreateBountyPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <label className="text-xs font-black text-foreground uppercase tracking-widest block">Issue Number</label>
-                    <input
-                      disabled={isLoading}
-                      type="number"
-                      value={issueNumber}
-                      onChange={(e) => setIssueNumber(e.target.value)}
-                      placeholder="#123"
-                      className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-bold"
-                    />
-                  </div>
+                <div className="space-y-4">
+                  <label className="text-xs font-black text-foreground uppercase tracking-widest block">Issue Number</label>
+                  <input
+                    disabled={isLoading}
+                    type="number"
+                    value={issueNumber}
+                    onChange={(e) => setIssueNumber(e.target.value)}
+                    placeholder="#123"
+                    className="w-full bg-surface-high border border-border-subtle rounded-2xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-bold max-w-[200px]"
+                  />
                 </div>
               </div>
             </section>
 
             <section>
-              <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Workflow Mode</h2>
+              <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Execution & Reward</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <div className="bg-surface-mid border border-border-subtle rounded-3xl p-6 flex flex-col gap-4">
-                    <label className="text-xs font-black text-foreground uppercase tracking-widest">Execution Style</label>
-                    <div className="flex bg-surface-high p-1 rounded-2xl border border-border-subtle">
-                      <button
-                        disabled={isLoading}
-                        onClick={() => setMode('proposal')}
-                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-tight transition-all flex items-center justify-center gap-2 ${mode === 'proposal' ? 'bg-accent text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                      >
-                        <UserCheck size={16} />
-                        Proposal
-                      </button>
-                      <button
-                        disabled={isLoading}
-                        onClick={() => setMode('open')}
-                        className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-tight transition-all flex items-center justify-center gap-2 ${mode === 'open' ? 'bg-accent text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
-                          }`}
-                      >
-                        <Zap size={16} />
-                        Open
-                      </button>
-                    </div>
-                    <div className="flex items-start gap-2 text-[10px] text-muted-foreground bg-black/5 p-3 rounded-xl border border-border-subtle italic leading-normal">
-                      <Info size={14} className="shrink-0 text-accent opacity-70" />
-                      {mode === 'proposal'
-                        ? "Contributors submit pitches. You manually select a winner to start work."
-                        : "Anyone can submit a solution. You pick the best implementation after the fact."}
-                    </div>
-                  </div>
+                   <div className="bg-surface-mid border border-border-subtle rounded-3xl p-6 flex flex-col gap-4 h-full">
+                     <label className="text-xs font-black text-foreground uppercase tracking-widest">Agent Workflow</label>
+                     <div className="flex items-start gap-3 text-[10px] text-muted-foreground bg-black/5 p-4 rounded-xl border border-border-subtle italic leading-relaxed">
+                        <Zap size={16} className="shrink-0 text-accent opacity-70 mt-0.5" />
+                        <span>This bounty is <strong>Open</strong>. Intelligent agents and contributors will submit PRs directly to the repository. The maintainer will merge and reward the most effective implementation.</span>
+                     </div>
+                   </div>
                 </div>
 
                 <div className="space-y-4">

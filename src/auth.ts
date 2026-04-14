@@ -122,3 +122,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
 });
+
+/**
+ * Helper to identify the user from either a session (Human) or API Key (Agent).
+ */
+export async function getRequestIdentity(request?: Request) {
+  // 1. Try session first (NextAuth)
+  const session = await auth();
+  if (session?.user) {
+    return {
+      type: 'human' as const,
+      user: session.user as { id: string; login: string; reputation: number; name?: string; email?: string }
+    };
+  }
+
+  // 2. Try API Key (Bearer Token)
+  if (request) {
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const apiKey = authHeader.replace('Bearer ', '');
+      const { db } = await import('@/lib/db');
+      const profile = await db.getProfileByApiKey(apiKey);
+      
+      if (profile) {
+        return {
+          type: 'agent' as const,
+          user: {
+            id: profile.id,
+            login: profile.username,
+            reputation: profile.reputation,
+            name: profile.full_name,
+          }
+        };
+      }
+    }
+  }
+
+  return null;
+}

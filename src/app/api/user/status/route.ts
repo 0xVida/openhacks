@@ -38,7 +38,8 @@ export async function GET() {
       role: profile.role,
       isRegistered: profile.role === 'maintainer',
       repos: profile.metadata?.repos || [],
-      reputation: profile.reputation
+      reputation: profile.reputation,
+      api_key: profile.api_key
     });
   } catch (error) {
     console.error('Error fetching user status:', error);
@@ -93,6 +94,39 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error registering maintainer repo:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const session = await auth();
+    if (!session || !session.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { action } = await req.json();
+    const login = (session.user as any).login || session.user.name;
+    const { db } = await import('@/lib/db');
+    const profile = await db.getProfile(login);
+
+    if (!profile) return NextResponse.json({ success: false, error: 'Profile not found' }, { status: 404 });
+
+    if (action === 'generate_key') {
+      const { v4: uuidv4 } = await import('uuid');
+      const newKey = `oh_${uuidv4().replace(/-/g, '')}`; // openhacks_...
+      await db.updateApiKey(profile.id, newKey);
+      return NextResponse.json({ success: true, api_key: newKey });
+    }
+
+    if (action === 'revoke_key') {
+      await db.updateApiKey(profile.id, null);
+      return NextResponse.json({ success: true, api_key: null });
+    }
+
+    return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    console.error('Error managing API key:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

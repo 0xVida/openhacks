@@ -1,54 +1,47 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { sendEscrow } from '@/lib/locus';
+import { getIssueDetails } from '@/lib/github';
 import { auth } from '@/auth';
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session || !session.user) {
+    const { getRequestIdentity } = await import('@/auth');
+    const identity = await getRequestIdentity(request);
+    
+    if (!identity) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, description, repo, issueNumber, reward, contributorEmail } = await request.json();
+    const { user } = identity;
 
-    if (!title || !description || !repo || !issueNumber || !reward) {
+    let { title, description, repo, issueNumber, reward, contributorEmail } = await request.json();
+
+    if (!repo || !issueNumber || !reward) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
+        { success: false, error: 'Missing required fields (repo, issueNumber, reward)' },
         { status: 400 }
       );
     }
 
-    // 1. Lock funds in Locus (Escrow)
-    const escrowTarget = contributorEmail || 'escrow@openhacks.com';
-    const memo = `Escrow for Bounty: ${title} (${repo}#${issueNumber})`;
-    
-    console.log(`Locking ${reward} USDC in Locus escrow for ${escrowTarget}`);
-    const locusResponse = await sendEscrow(escrowTarget, reward, memo);
-
-    if (!locusResponse.success) {
-      console.error('Locus escrow failed:', locusResponse.message);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Payment escrow failed', 
-          message: locusResponse.message || 'The Locus API could not process the escrow. Check your balance and API key.' 
-        },
-        { status: 500 }
-      );
+    // Auto-fetch issue details if missing
+    if (!title || !description) {
+      const details = await getIssueDetails(repo, parseInt(issueNumber, 10));
+      if (details.success) {
+        title = title || details.title;
+        description = description || details.description;
+      } else if (!title) {
+        return NextResponse.json(
+          { success: false, error: 'Could not fetch issue details from GitHub. Please provide title and description manually.' },
+          { status: 400 }
+        );
+      }
     }
 
-    // 2. Add to Supabase
-    let maintainerId = (session.user as any).id;
+    // 1. Prepare Escrow Details (Platform is the custodian)
+    const platformWallet = process.env.LOCUS_PLATFORM_WALLET || '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
     
-    // Safety check: ensure we have a Supabase UUID, not a GitHub ID string
-    if (!maintainerId || !maintainerId.includes('-')) {
-       console.log(`Maintainer ID ${maintainerId} is not a UUID, fetching from DB...`);
-       const profile = await db.getProfile((session.user as any).login || session.user.name);
-       if (profile) {
-         maintainerId = profile.id;
-       }
-    }
+    // 2. Map maintainer ID
+    let maintainerId = user.id;
 
     const newBounty = await db.addBounty({
       title,
@@ -56,13 +49,25 @@ export async function POST(request: Request) {
       repo_fullname: repo,
       issue_number: parseInt(issueNumber, 10),
       reward_amount: parseFloat(reward),
-      status: 'open',
-      maintainer_id: maintainerId
+      status: 'open', // We'll set to open for now, but mark funding_status
+      maintainer_id: maintainerId,
+      funding_status: 'unfunded',
+      escrow_address: platformWallet
     });
+
+    if (!newBounty) throw new Error('Failed to create bounty record');
 
     return NextResponse.json({
       success: true,
-      data: newBounty
+      data: {
+        bounty: newBounty,
+        funding_instructions: {
+          address: platformWallet,
+          amount: parseFloat(reward),
+          memo: `fund_bounty:${newBounty.id}`,
+          token: 'USDC'
+        }
+      }
     });
   } catch (error) {
     console.error('Error creating bounty:', error);
@@ -70,5 +75,18 @@ export async function POST(request: Request) {
       { success: false, error: 'Internal Server Error' },
       { status: 500 }
     );
+  }
+}
+
+export async function GET() {
+  try {
+    const bounties = await db.getBounties();
+    return NextResponse.json({
+      success: true,
+      data: bounties
+    });
+  } catch (error) {
+    console.error('Error fetching bounties:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

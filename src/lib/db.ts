@@ -8,6 +8,8 @@ export interface Profile {
   avatar_url?: string;
   reputation: number;
   role: 'contributor' | 'maintainer';
+  api_key?: string;
+  locus_wallet_address?: string;
 }
 
 export interface Bounty {
@@ -19,6 +21,8 @@ export interface Bounty {
   reward_amount: number;
   status: 'open' | 'processing' | 'merged' | 'paid';
   maintainer_id?: string;
+  escrow_address?: string;
+  funding_status?: 'unfunded' | 'funded';
   created_at?: string;
 }
 
@@ -33,6 +37,26 @@ export const db = {
     
     if (error) return null;
     return data;
+  },
+
+  async getProfileByApiKey(apiKey: string): Promise<Profile | null> {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('*')
+      .eq('api_key', apiKey)
+      .single();
+    
+    if (error) return null;
+    return data;
+  },
+
+  async updateApiKey(id: string, apiKey: string | null) {
+    const { error } = await supabaseAdmin
+      .from('profiles')
+      .update({ api_key: apiKey })
+      .eq('id', id);
+    
+    if (error) console.error('Error updating API key:', error);
   },
 
   async updateReputation(username: string, amount: number) {

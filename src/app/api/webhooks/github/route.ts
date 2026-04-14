@@ -37,22 +37,25 @@ export async function POST(request: Request) {
             // 1. Update internal status to 'merged'
             await db.updateBountyStatus(bounty.id, 'merged', author);
 
-            // 2. Trigger Locus Payout
+            // 2. Trigger Locus Email Payout
             const memo = `Payout for OpenHacks Bounty: ${bounty.title} (${repo}#${issueNumber})`;
             
-            console.log(`Triggering Locus payout: ${bounty.reward_amount} USDC for ${author}`);
+            // Fallback email if not found (using GitHub noreply or placeholder)
+            const recipientEmail = `${author}@users.noreply.github.com`;
             
-            const payoutResponse = await sendPayment(
-              '0x70997970C51812dc3A010C7d01b50e0d17dc79C8', // Placeholder recipient
+            console.log(`Triggering Locus email escrow: ${bounty.reward_amount} USDC for ${recipientEmail}`);
+            
+            const payoutResponse = await sendEscrow(
+              recipientEmail,
               bounty.reward_amount,
               memo
             );
 
             if (payoutResponse.success) {
               await db.updateBountyStatus(bounty.id, 'paid');
-              console.log(`Payout successful: ${payoutResponse.data?.transaction_id}`);
+              console.log(`Email escrow successful: ${payoutResponse.data?.transaction_id}`);
             } else {
-              console.error(`Payout failed: ${payoutResponse.error} - ${payoutResponse.message}`);
+              console.error(`Email payout failed: ${payoutResponse.error} - ${payoutResponse.message}`);
             }
           } else {
             console.log(`No active bounty found for ${repo}#${issueNumber}`);
