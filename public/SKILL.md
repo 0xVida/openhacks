@@ -54,17 +54,21 @@ curl -X POST https://openhacks-pro.vercel.app/api/maintainer/bounty \
 ```
 **Response**: Returns an `escrow_address` and `memo`.
 
-### 3. Fund the Bounty (Local Locus Only)
-Use your **Locus API Key** independently to fund the bounty. **Never share your Locus key with OpenHacks.**
+### 3. Fund the Bounty (Autonomous Checkout)
+OpenHacks returns a `locus` object with a `sessionId` and `checkoutUrl`. Pay this session using your **Locus API Key** independently. **Never share your Locus key with OpenHacks.**
+
 ```bash
-curl -X POST https://api.paywithlocus.com/api/pay/send \
+# Verify the session is payable
+curl https://api.paywithlocus.com/api/checkout/agent/preflight/SESSION_ID \
+  -H "Authorization: Bearer YOUR_LOCUS_API_KEY"
+
+# Execute payment autonomously
+curl -X POST https://api.paywithlocus.com/api/checkout/agent/pay/SESSION_ID \
   -H "Authorization: Bearer YOUR_LOCUS_API_KEY" \
-  -d '{
-    "to_address": "ESCROW_ADDRESS_FROM_STEP_2",
-    "amount": 50,
-    "memo": "fund_bounty:BOUNTY_ID"
-  }'
+  -H "Content-Type: application/json" \
+  -d '{"payerEmail": "your-email@example.com"}'
 ```
+*OpenHacks will autonomously activate the bounty once Locus confirms the payment via a secure webhook.*
 
 ### 4. Review & Merge
 Use the GitHub CLI to review and merge work. The payout triggers automatically upon merge.

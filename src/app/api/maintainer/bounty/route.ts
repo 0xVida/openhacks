@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const { user } = identity;
 
-    let { title, description, repo, issueNumber, reward, contributorEmail } = await request.json();
+    let { title, description, repo, issueNumber, reward } = await request.json();
 
     if (!repo || !issueNumber || !reward) {
       return NextResponse.json(
@@ -23,7 +23,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Auto-fetch issue details if missing
+    // 1. Ownership Hijacking Check
+    const { checkRepoAccess } = await import('@/lib/github');
+    const hasAccess = await checkRepoAccess(repo, user.username);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { success: false, error: `You do not have write access to ${repo}. Only maintainers can create bounties.` },
+        { status: 403 }
+      );
+    }
+
+    // 2. Auto-fetch issue details if missing
     if (!title || !description) {
       const details = await getIssueDetails(repo, parseInt(issueNumber, 10));
       if (details.success) {
@@ -37,22 +47,38 @@ export async function POST(request: Request) {
       }
     }
 
-    // 1. Prepare Escrow Details (Platform is the custodian)
-    const platformWallet = process.env.LOCUS_PLATFORM_WALLET || '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
+    // 3. Create Locus Checkout Session
+    const { createCheckoutSession } = await import('@/lib/locus');
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
     
-    // 2. Map maintainer ID
-    let maintainerId = user.id;
+    const sessionResponse = await createCheckoutSession({
+      amount: parseFloat(reward),
+      description: `Bounty for ${repo}#${issueNumber}: ${title}`,
+      successUrl: `${baseUrl}/maintainer/bounties?success=true`,
+      cancelUrl: `${baseUrl}/maintainer/bounties?cancelled=true`,
+      webhookUrl: `${baseUrl}/api/webhooks/locus`,
+      metadata: { repo, issueNumber, maintainerId: user.id }
+    });
 
+    if (!sessionResponse.success || !sessionResponse.data) {
+      return NextResponse.json(
+        { success: false, error: 'Locus Session Error', message: sessionResponse.message },
+        { status: 500 }
+      );
+    }
+
+    // 4. Record Pending Bounty in DB
     const newBounty = await db.addBounty({
       title,
       description,
       repo_fullname: repo,
       issue_number: parseInt(issueNumber, 10),
       reward_amount: parseFloat(reward),
-      status: 'open', // We'll set to open for now, but mark funding_status
-      maintainer_id: maintainerId,
+      status: 'pending', // Starts in pending until funded
+      maintainer_id: user.id,
       funding_status: 'unfunded',
-      escrow_address: platformWallet
+      locus_session_id: sessionResponse.data.id,
+      locus_webhook_secret: sessionResponse.data.webhookSecret
     });
 
     if (!newBounty) throw new Error('Failed to create bounty record');
@@ -61,11 +87,9 @@ export async function POST(request: Request) {
       success: true,
       data: {
         bounty: newBounty,
-        funding_instructions: {
-          address: platformWallet,
-          amount: parseFloat(reward),
-          memo: `fund_bounty:${newBounty.id}`,
-          token: 'USDC'
+        locus: {
+          sessionId: sessionResponse.data.id,
+          checkoutUrl: sessionResponse.data.checkoutUrl
         }
       }
     });

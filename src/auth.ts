@@ -47,7 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         const login = token.login || (session.user as any).login || session.user.name;
         (session.user as any).login = login;
-        
+
         // Fetch the REAL Supabase UUID for this profile
         try {
           const { data: profile, error } = await supabaseAdmin
@@ -55,12 +55,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             .select('id, reputation')
             .eq('username', login)
             .single();
-          
+
           if (profile) {
             (session.user as any).id = profile.id; // Map to Supabase UUID
             (session.user as any).reputation = profile.reputation;
           } else {
-             console.warn(`No profile found for login: ${login}`);
+            console.warn(`No profile found for login: ${login}`);
           }
         } catch (e) {
           console.error("Session profile sync error:", e);
@@ -73,7 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const username = githubProfile.login;
         const avatar_url = githubProfile.avatar_url;
         const full_name = githubProfile.name;
-        
+
         // Generate a valid UUID from the numeric GitHub ID
         const supabaseId = uuidv5(user.id, GITHUB_NAMESPACE);
 
@@ -95,7 +95,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 updated_at: new Date().toISOString()
               })
               .eq('id', existingProfile.id);
-            
+
             if (updateError) console.error("Error updating profile:", updateError);
           } else {
             // Create new
@@ -109,9 +109,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 full_name,
                 role: 'contributor'
               });
-            
+
             if (insertError) {
-               console.error("CRITICAL: Error creating profile in Supabase. Check if you dropped the fkey constraint as requested:", insertError);
+              console.error("CRITICAL: Error creating profile in Supabase. Check if you dropped the fkey constraint as requested:", insertError);
             }
           }
         } catch (e) {
@@ -123,9 +123,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
 });
 
-/**
- * Helper to identify the user from either a session (Human) or API Key (Agent).
- */
+
 export async function getRequestIdentity(request?: Request) {
   // 1. Try session first (NextAuth)
   const session = await auth();
@@ -143,7 +141,7 @@ export async function getRequestIdentity(request?: Request) {
       const apiKey = authHeader.replace('Bearer ', '');
       const { db } = await import('@/lib/db');
       const profile = await db.getProfileByApiKey(apiKey);
-      
+
       if (profile) {
         return {
           type: 'agent' as const,

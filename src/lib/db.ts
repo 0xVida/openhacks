@@ -19,10 +19,12 @@ export interface Bounty {
   repo_fullname: string;
   issue_number: number;
   reward_amount: number;
-  status: 'open' | 'processing' | 'merged' | 'paid';
+  status: 'pending' | 'open' | 'processing' | 'merged' | 'paid';
   maintainer_id?: string;
   escrow_address?: string;
   funding_status?: 'unfunded' | 'funded';
+  locus_session_id?: string;
+  locus_webhook_secret?: string;
   created_at?: string;
 }
 
@@ -140,6 +142,27 @@ export const db = {
       .eq('issue_number', issueNumber)
       .single();
     
+    if (error) return null;
+    return data;
+  },
+
+  async getBountyBySessionId(sessionId: string): Promise<Bounty | null> {
+    const { data, error } = await supabaseAdmin
+      .from('bounties')
+      .select('*')
+      .eq('locus_session_id', sessionId)
+      .single();
+    if (error) return null;
+    return data;
+  },
+
+  async updateBounty(id: string, updates: Partial<Bounty>): Promise<Bounty | null> {
+    const { data, error } = await supabaseAdmin
+      .from('bounties')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
     if (error) return null;
     return data;
   }

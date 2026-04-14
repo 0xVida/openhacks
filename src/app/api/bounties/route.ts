@@ -6,10 +6,15 @@ export async function GET() {
     // Public endpoint for contributors to discover work across all maintainers
     const bounties = await db.getBounties();
     
-    // Filter out internal metadata if necessary, but for now we return all
+    // 🛡️ Discovery Filtration: Only show bounties that are FUNDED and ACTIVE
+    const fundedBounties = bounties.filter(b => 
+      b.funding_status === 'funded' && 
+      (b.status === 'open' || b.status === 'processing')
+    );
+
     return NextResponse.json({
       success: true,
-      data: bounties
+      data: fundedBounties
     });
   } catch (error) {
     console.error('Error in public discovery API:', error);
