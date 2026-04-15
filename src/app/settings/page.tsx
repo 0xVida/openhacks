@@ -14,9 +14,11 @@ import {
 import Github from '@/components/ui/GithubIcon';
 import { useRole } from '@/components/providers/role-context';
 import { signOut, signIn } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
    const { role, setRole, githubUser, setGithubUser } = useRole();
+   const [copied, setCopied] = React.useState(false);
 
    return (
       <div className="flex-1 overflow-y-auto p-8 md:p-12 bg-surface-low">
@@ -141,12 +143,15 @@ export default function SettingsPage() {
                                  />
                                  <button
                                     onClick={() => {
-                                       navigator.clipboard.writeText(githubUser.api_key || '');
-                                       // Add toast/feedback here
+                                       if (githubUser.api_key) {
+                                          navigator.clipboard.writeText(githubUser.api_key);
+                                          setCopied(true);
+                                          setTimeout(() => setCopied(false), 2000);
+                                       }
                                     }}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-surface-low hover:bg-surface-mid border border-border-subtle rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                    className={`absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border ${copied ? 'bg-green-500 text-white border-green-600 shadow-lg shadow-green-500/20' : 'bg-surface-low hover:bg-surface-mid border-border-subtle text-muted-foreground'}`}
                                  >
-                                    Copy key
+                                    {copied ? 'Copied!' : 'Copy key'}
                                  </button>
                               </div>
                               <div className="flex gap-3">
@@ -217,6 +222,23 @@ export default function SettingsPage() {
                   <div className="w-12 h-6 bg-border-subtle rounded-full relative">
                      <div className="absolute left-1 top-1 w-4 h-4 bg-muted-foreground rounded-full"></div>
                   </div>
+               </div>
+
+               {/* Documentation & Help */}
+               <div className="p-8 bg-premium-gradient border border-border-subtle rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 mt-12">
+                  <div>
+                     <h3 className="text-lg font-black text-foreground uppercase tracking-tight mb-2">Platform Documentation</h3>
+                     <p className="text-xs text-muted-foreground font-medium max-w-md">
+                        Learn how to scale your project with autonomous agents, understand the reputation system, and master the OpenClaw protocol.
+                     </p>
+                  </div>
+                  <Link 
+                     href="/docs"
+                     className="px-6 py-4 bg-surface-low hover:bg-surface-high border border-border-subtle rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 whitespace-nowrap shadow-xl"
+                  >
+                     Explore Docs
+                     <ChevronRight size={14} />
+                  </Link>
                </div>
 
                {/* Danger Zone */}

@@ -8,6 +8,7 @@ import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
 import Github from '@/components/ui/GithubIcon';
 import SuccessModal from '@/components/ui/SuccessModal';
+import OnboardingModal from '@/components/ui/OnboardingModal';
 
 export default function Home() {
   const { role, registeredRepos, githubUser } = useRole();
@@ -224,6 +225,9 @@ export default function Home() {
                       <Github size={12} />
                       Connect Repos
                    </Link>
+                   <div className="mt-4 pt-4 border-t border-accent/10">
+                     <a href="/docs" className="text-[10px] font-bold text-muted-foreground hover:text-accent uppercase tracking-widest">View Documentation</a>
+                   </div>
                 </div>
               )}
 
@@ -280,6 +284,7 @@ export default function Home() {
            )}
         </div>
       </div>
+      <OnboardingModal />
     </div>
   );
 }
