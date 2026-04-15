@@ -5,7 +5,7 @@ import { Wallet, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 
 export function BalanceDisplay() {
   const [balance, setBalance] = useState<string | null>(null);
-  const [address, setAddress] = useState<string | null>(null);
+  const [label, setLabel] = useState<string>('Project Escrow');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +18,7 @@ export function BalanceDisplay() {
 
       if (data.success && data.data) {
         setBalance(data.data.usdc_balance);
-        setAddress(data.data.wallet_address);
+        if (data.data.label) setLabel(data.data.label);
       } else {
         setError(data.message || 'Failed to fetch');
       }
@@ -38,7 +38,7 @@ export function BalanceDisplay() {
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
           <Wallet size={12} className="text-accent" />
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Balance</span>
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{label}</span>
         </div>
         <div className="flex items-center gap-2">
           {isLoading ? (
@@ -46,7 +46,7 @@ export function BalanceDisplay() {
           ) : error ? (
             <div className="flex items-center gap-1 text-red-500" title={error}>
               <AlertCircle size={14} />
-              <span className="text-xs font-black uppercase">Service Error</span>
+              <span className="text-xs font-black uppercase">Syncing...</span>
             </div>
           ) : (
             <span className="text-sm font-black text-foreground">{balance} USDC</span>
@@ -57,7 +57,7 @@ export function BalanceDisplay() {
       <button
         onClick={fetchBalance}
         className="p-2 hover:bg-surface-high rounded-xl transition-colors text-muted-foreground hover:text-accent"
-        title="Refresh Balance"
+        title="Sync Escrow"
       >
         <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
       </button>

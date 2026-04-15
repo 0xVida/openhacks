@@ -93,21 +93,6 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     }
   }, [session, status, hasLoadedInitial]);
 
-  // SURFACING AUTH LOGS TO BROWSER CONSOLE
-  useEffect(() => {
-    if (session && (session as any).debugLogs) {
-      console.log(
-        '%c[AUTH-DIAGNOSTIC] BRIDGE ESTABLISHED', 
-        'background: #6366f1; color: white; padding: 2px 5px; border-radius: 4px; font-weight: bold;'
-      );
-      (session as any).debugLogs.forEach((log: string) => {
-        const color = log.includes('SUCCESS') ? '#10b981' : log.includes('ERROR') ? '#ef4444' : '#6366f1';
-        console.log(`%c${log}`, `color: ${color}; font-weight: 500;`);
-      });
-      console.log('%c------------------------------', 'color: #6366f1; opacity: 0.5;');
-    }
-  }, [session]);
-
   return (
     <RoleContext.Provider value={{ 
       role, 

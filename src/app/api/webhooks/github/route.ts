@@ -60,7 +60,16 @@ export async function POST(request: Request) {
             await db.updateBountyStatus(bounty.id, 'merged', author);
 
             const memo = `Payout for OpenHacks Bounty: ${bounty.title} (${repo}#${issueNumber})`;
-            const recipientEmail = `${author}@users.noreply.github.com`;
+            
+            // 4. Connect Verified Primary Email
+            let recipientEmail = `${author}@users.noreply.github.com`;
+            const profile = await db.getProfile(author);
+            if (profile?.email) {
+              recipientEmail = profile.email;
+              console.log(`[PAYOUT] Using verified email for ${author}: ${recipientEmail}`);
+            } else {
+              console.warn(`[PAYOUT] No verified email for ${author}, falling back to noreply`);
+            }
 
             console.log(`Triggering Locus email escrow: ${bounty.reward_amount} USDC for ${recipientEmail}`);
 

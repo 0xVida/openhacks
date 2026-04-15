@@ -8,6 +8,7 @@ export interface Profile {
   avatar_url?: string;
   reputation: number;
   role: 'contributor' | 'maintainer';
+  email?: string;
   api_key?: string;
   locus_wallet_address?: string;
 }
@@ -166,5 +167,21 @@ export const db = {
       .single();
     if (error) return null;
     return data;
+  },
+
+  async getEscrowTotal(maintainerId: string): Promise<number> {
+    const { data, error } = await supabaseAdmin
+      .from('bounties')
+      .select('reward_amount')
+      .eq('maintainer_id', maintainerId)
+      .eq('funding_status', 'funded')
+      .not('status', 'eq', 'paid');
+
+    if (error) {
+      console.error('Error calculating escrow total:', error);
+      return 0;
+    }
+
+    return (data || []).reduce((sum, b) => sum + Number(b.reward_amount), 0);
   }
 };

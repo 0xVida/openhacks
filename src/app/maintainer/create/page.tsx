@@ -133,10 +133,22 @@ export default function CreateBountyPage() {
 
       const result = await response.json();
 
-      if (result.success) {
+      if (result.success && result.data?.locus?.checkoutUrl) {
+        setSuccessData({
+          title: "Bounty Initialized",
+          message: "Redirecting to Locus secure checkout to fund your bounty..."
+        });
+        setIsError(false);
+        setShowSuccess(true);
+        
+        // Automatic redirect to Locus after a brief confirmation
+        setTimeout(() => {
+          window.location.href = result.data.locus.checkoutUrl;
+        }, 2000);
+      } else if (result.success) {
         setSuccessData({
           title: "Bounty Launched",
-          message: "The bounty has been successfully created and the funds are now secured in the project's escrow account."
+          message: "The bounty has been successfully created and recorded."
         });
         setIsError(false);
         setShowSuccess(true);
