@@ -79,25 +79,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           let syncEmail = user.email;
+          console.log(`[AUTH] Synchronizing user: ${username} (Default email: ${syncEmail})`);
+
           if (account.access_token) {
             try {
+              console.log(`[AUTH] Fetching primary email from GitHub for ${username}...`);
               const emailRes = await fetch("https://api.github.com/user/emails", {
                 headers: {
-                  Authorization: `token ${account.access_token}`,
+                  Authorization: `Bearer ${account.access_token}`,
+                  "Accept": "application/vnd.github.v3+json",
                 },
               });
+              
               if (emailRes.ok) {
                 const emails = await emailRes.json();
+                console.log(`[AUTH] Found ${emails.length} emails for ${username}`);
                 const primaryEmail = emails.find((e: any) => e.primary && e.verified);
                 if (primaryEmail) {
                   syncEmail = primaryEmail.email;
+                  console.log(`[AUTH] Primary verified email identified: ${syncEmail}`);
                 } else if (emails.length > 0) {
-                  syncEmail = emails.find((e: any) => e.verified)?.email || emails[0].email;
+                  const fallback = emails.find((e: any) => e.verified)?.email || emails[0].email;
+                  syncEmail = fallback;
+                  console.log(`[AUTH] Falling back to: ${syncEmail}`);
                 }
+              } else {
+                console.error(`[AUTH] GitHub Email API error: ${emailRes.status}`);
               }
             } catch (e) {
-              console.error("Error fetching GitHub emails:", e);
+              console.error("[AUTH] Error fetching GitHub emails:", e);
             }
+          } else {
+            console.warn(`[AUTH] No access token found in account for ${username}`);
           }
 
           // Check if profile exists by username (legacy sync) or supabaseId
