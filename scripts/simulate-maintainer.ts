@@ -1,7 +1,11 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-require('dotenv').config({ path: '.env.local' });
+
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+}
 
 /**
  * OpenHacks Maintainer Agent Simulation
@@ -16,9 +20,16 @@ require('dotenv').config({ path: '.env.local' });
 async function simulateMaintainer() {
     const OPENHACKS_API_KEY = process.env.OPENHACKS_API_KEY;
     const LOCUS_API_KEY = process.env.LOCUS_API_KEY;
-    const REPO = process.env.REPO || '0xVida/openhacks'; // Default to the workspace repo
-    const API_BASE = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
-    const LOCUS_API_BASE = 'https://api.paywithlocus.com/api';
+    const REPO = process.env.REPO || '0xVida/openhacks';
+    const API_BASE = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';
+    const LOCUS_API_BASE = 'https://beta-api.paywithlocus.com/api';
+
+    console.log(`\n--- Simulation Context ---`);
+    console.log(`API_BASE: ${API_BASE}`);
+    console.log(`REPO:     ${REPO}`);
+    console.log(`OPENHACKS_KEY: ${OPENHACKS_API_KEY ? 'Present' : 'MISSING'}`);
+    console.log(`LOCUS_KEY:     ${LOCUS_API_KEY ? 'Present' : 'MISSING'}`);
+    console.log(`--------------------------\n`);
 
     if (!OPENHACKS_API_KEY || !LOCUS_API_KEY) {
         console.error('Error: Missing OPENHACKS_API_KEY or LOCUS_API_KEY in .env.local');
@@ -33,7 +44,7 @@ async function simulateMaintainer() {
     console.log(`\nPhase 2: Creating GitHub Issue in ${REPO}...`);
     const issueTitle = `Agentic Task: ${new Date().getTime()}`;
     const issueBody = "This is an automated task created by the Maintainer Simulation agent. Priority: High.";
-    
+
     let issueNumber: number;
     try {
         const ghOutput = execSync(`gh issue create --title "${issueTitle}" --body "${issueBody}" --repo ${REPO}`, { encoding: 'utf8' });
@@ -63,6 +74,7 @@ async function simulateMaintainer() {
     const registerData: any = await registerResponse.json();
     if (!registerResponse.ok) {
         console.error('Registration Failed:', registerData.error);
+        if (registerData.message) console.error('Details:', registerData.message);
         process.exit(1);
     }
 
@@ -91,15 +103,36 @@ async function simulateMaintainer() {
 
     console.log(`Payment Submitted. Transaction ID: ${payData.data?.transaction_id || 'Pending'}`);
 
+    console.log('\nPhase 4.5: Simulating Locus Webhook Confirmation (Local Development)...');
+    const webhookPayload = JSON.stringify({
+        event: 'checkout.session.paid',
+        data: { sessionId }
+    });
+
+    const webhookResponse = await fetch(`${API_BASE}/api/webhooks/locus`, {
+        method: 'POST',
+        headers: {
+            'x-signature-256': 'local-sim', // Placeholder
+            'Content-Type': 'application/json'
+        },
+        body: webhookPayload
+    });
+
+    if (webhookResponse.ok) {
+        console.log('Local Webhook Simulation: SUCCESS (Bounty funding confirmed)');
+    } else {
+        console.error('Local Webhook Simulation: FAILED', await webhookResponse.text());
+    }
+
     console.log('\nPhase 5: Polling for funding confirmation...');
     let isFunded = false;
     for (let i = 0; i < 10; i++) {
         process.stdout.write('.');
         await new Promise(r => setTimeout(r, 3000));
-        
+
         const discoveryResponse = await fetch(`${API_BASE}/api/bounties`);
         const discoveryData: any = await discoveryResponse.json();
-        
+
         const found = discoveryData.data.find((b: any) => b.id === bountyId);
         if (found) {
             isFunded = true;

@@ -49,8 +49,9 @@ export async function POST(request: Request) {
 
     // 3. Create Locus Checkout Session
     const { createCheckoutSession } = await import('@/lib/locus');
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';
     
+    console.log(`Creating Locus Session for: ${repo}#${issueNumber}`);
     const sessionResponse = await createCheckoutSession({
       amount: parseFloat(reward),
       description: `Bounty for ${repo}#${issueNumber}: ${title}`,

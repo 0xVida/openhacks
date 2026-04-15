@@ -133,7 +133,14 @@ export async function createCheckoutSession(params: {
         'Authorization': `Bearer ${LOCUS_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify({
+        amount: params.amount.toString(),
+        description: params.description,
+        success_url: params.successUrl,
+        cancel_url: params.cancelUrl,
+        webhook_url: params.webhookUrl,
+        metadata: params.metadata
+      }),
     });
 
     const data = await response.json();
@@ -144,9 +151,10 @@ export async function createCheckoutSession(params: {
     return {
       success: true,
       data: {
-        id: data.data.id,
-        checkoutUrl: data.data.checkoutUrl,
-        webhookSecret: data.data.webhookSecret,
+        id: data.data.id || data.data.session_id,
+        checkoutUrl: data.data.checkoutUrl || data.data.checkout_url,
+        webhookSecret: data.data.webhookSecret || data.data.webhook_secret || data.data.secret || data.data.signing_secret,
+        _raw_keys: Object.keys(data.data || {}) 
       }
     };
   } catch (error: any) {

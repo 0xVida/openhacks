@@ -1,7 +1,11 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-require('dotenv').config({ path: '.env.local' });
+
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+    require('dotenv').config({ path: envPath });
+}
 
 /**
  * OpenHacks Contributor Agent Simulation
@@ -14,9 +18,13 @@ require('dotenv').config({ path: '.env.local' });
  */
 
 async function simulateContributor() {
-    const API_BASE = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    const API_BASE = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';
     const TEST_DIR = path.join(process.cwd(), 'temp_simulation');
 
+    console.log(`\n--- Simulation Context ---`);
+    console.log(`API_BASE: ${API_BASE}`);
+    console.log(`TEST_DIR: ${TEST_DIR}`);
+    console.log(`--------------------------\n`);
     console.log('Phase 1: Discovering funded bounties...');
     const discoveryResponse = await fetch(`${API_BASE}/api/bounties`);
     const discoveryData: any = await discoveryResponse.json();
@@ -45,20 +53,31 @@ async function simulateContributor() {
     }
 
     console.log('\nPhase 3: Simulating a Fix...');
+    const branchName = `fix-issue-${bounty.issue_number}-${new Date().getTime()}`;
+    execSync(`git checkout -b ${branchName}`);
+    
     const fixFilePath = path.join(TEST_DIR, 'CONTRIBUTOR_FIX.md');
     fs.writeFileSync(fixFilePath, `# Fix for Issue #${bounty.issue_number}\n\nResolved the problem defined in the issue.`);
-    
-    process.chdir(TEST_DIR);
+
     execSync('git add .');
     execSync(`git commit -m "Fix for #${bounty.issue_number} - OpenHacks Simulation"`);
-    
-    console.log('Simulation locally complete. Prepared commit with the fix.');
 
     console.log(`\nPhase 4: Submitting Pull Request for issue #${bounty.issue_number}...`);
-    console.log('Executing: gh pr create ...');
-    
-    console.log(`\nSUCCESS: PR message would contain: "Fixes #${bounty.issue_number}"`);
-    console.log(`Maintainer can now merge this PR to trigger the automated ${bounty.reward_amount} USDC payout.`);
+    try {
+        console.log(`Pushing branch ${branchName}...`);
+        execSync(`git push -u origin ${branchName}`, { stdio: 'inherit' });
+
+        console.log('Creating PR on GitHub...');
+        const prBody = `This is an automated fix for #${bounty.issue_number}.\n\nFixes #${bounty.issue_number} (OpenHacks Auto Payout Test)`;
+        const prOutput = execSync(`gh pr create --title "Fix for #${bounty.issue_number}" --body "${prBody}" --head ${branchName}`, { encoding: 'utf8' });
+        
+        console.log(`\nSUCCESS: PR Created!`);
+        console.log(`URL: ${prOutput.trim()}`);
+        console.log(`\nNext Step: Go to the URL above and MERGE the PR to trigger the automated ${bounty.reward_amount} USDC payout.`);
+    } catch (error: any) {
+        console.error('Error Automating PR:', error.message);
+        console.log('\nManual Step Required: You might need to push the branch and run "gh pr create" manually.');
+    }
 }
 
 simulateContributor();

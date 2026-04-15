@@ -9,12 +9,11 @@ export async function POST(request: Request) {
     const signature = request.headers.get('x-hub-signature-256');
     const event = request.headers.get('x-github-event');
 
-    // 1. Signature Verification (Anti-Spoofing)
     const secret = process.env.GITHUB_WEBHOOK_SECRET;
     if (secret && signature) {
       const hmac = crypto.createHmac('sha256', secret);
       const digest = 'sha256=' + hmac.update(rawBody).digest('hex');
-      
+
       if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest))) {
         console.warn('GitHub Webhook: Invalid signature');
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
@@ -62,9 +61,9 @@ export async function POST(request: Request) {
 
             const memo = `Payout for OpenHacks Bounty: ${bounty.title} (${repo}#${issueNumber})`;
             const recipientEmail = `${author}@users.noreply.github.com`;
-            
+
             console.log(`Triggering Locus email escrow: ${bounty.reward_amount} USDC for ${recipientEmail}`);
-            
+
             const payoutResponse = await sendEscrow(
               recipientEmail,
               bounty.reward_amount,
