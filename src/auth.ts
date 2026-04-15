@@ -30,37 +30,121 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET,
   callbacks: {
-    async jwt({ token, user, account, profile }: any) {
+    async jwt({ token, user, account, trigger }: any) {
+      const debugLogs: string[] = [];
+      const log = (msg: string) => {
+        const timestamped = `[${new Date().toISOString().split('T')[1].split('.')[0]}] ${msg}`;
+        console.log(timestamped);
+        debugLogs.push(timestamped);
+      };
+
+      if (trigger === "signIn" && account?.provider === "github") {
+        log(`[AUTH] Starting sign-in trigger for ${token.name || token.login}`);
+        
+        if (account.access_token) {
+          try {
+            log(`[AUTH] Fetching primary email from GitHub...`);
+            const emailRes = await fetch("https://api.github.com/user/emails", {
+              headers: {
+                Authorization: `Bearer ${account.access_token}`,
+                "Accept": "application/vnd.github.v3+json",
+              },
+            });
+
+            if (emailRes.ok) {
+              const emails = await emailRes.json();
+              log(`[AUTH] Found ${emails.length} total GitHub emails`);
+              
+              const primaryEmail = emails.find((e: any) => e.primary && e.verified);
+              if (primaryEmail) {
+                token.email = primaryEmail.email;
+                log(`[AUTH] SUCCESS: Primary verified email found: ${token.email}`);
+              } else {
+                const fallback = emails.find((e: any) => e.verified)?.email || emails[0]?.email;
+                token.email = fallback;
+                log(`[AUTH] WARNING: No primary verified found. Falling back to: ${token.email}`);
+              }
+            } else {
+              log(`[AUTH] ERROR: GitHub Email API returned status ${emailRes.status}`);
+            }
+          } catch (e: any) {
+            log(`[AUTH] CRITICAL ERROR: ${e.message}`);
+          }
+        } else {
+          log(`[AUTH] ERROR: No access token found in account object`);
+        }
+
+        // Trigger database sync
+        if (token.email) {
+          try {
+            const username = token.login || token.name;
+            const supabaseId = uuidv5(token.id as string, GITHUB_NAMESPACE);
+            log(`[AUTH] Syncing to Supabase (User: ${username}, Email: ${token.email})`);
+
+            const { data: existing } = await supabaseAdmin.from('profiles').select('id').eq('id', supabaseId).maybeSingle();
+            
+            if (existing) {
+              await supabaseAdmin.from('profiles').update({ 
+                email: token.email, 
+                avatar_url: token.picture,
+                full_name: token.name,
+                updated_at: new Date().toISOString() 
+              }).eq('id', supabaseId);
+              log(`[AUTH] Profile updated in DB`);
+            } else {
+              await supabaseAdmin.from('profiles').insert({
+                id: supabaseId,
+                username,
+                email: token.email,
+                avatar_url: token.picture,
+                full_name: token.name,
+                role: 'contributor'
+              });
+              log(`[AUTH] New profile created in DB`);
+            }
+          } catch (err: any) {
+            log(`[AUTH] DB SYNC ERROR: ${err.message}`);
+          }
+        }
+      }
+
       if (user) {
         token.id = user.id;
-        token.login = user.login || (profile as any)?.login;
+        token.login = user.login || (user as any)?.name;
       }
       if (account) {
         token.accessToken = account.access_token;
       }
+      
+      // Persist logs to token so session can see them
+      if (debugLogs.length > 0) {
+        token.debugLogs = debugLogs;
+      }
+      
       return token;
     },
     async session({ session, token }: any) {
       if (token.accessToken) {
         (session as any).accessToken = token.accessToken;
       }
+      if (token.debugLogs) {
+        (session as any).debugLogs = token.debugLogs;
+      }
+      
       if (session.user) {
-        const login = token.login || (session.user as any).login || session.user.name;
-        (session.user as any).login = login;
+        (session.user as any).login = token.login;
+        (session.user as any).id = token.id;
 
-        // Fetch the REAL Supabase UUID for this profile
+        // Fetch the REAL Supabase statistics for this profile
         try {
-          const { data: profile, error } = await supabaseAdmin
+          const { data: profile } = await supabaseAdmin
             .from('profiles')
-            .select('id, reputation')
-            .eq('username', login)
+            .select('reputation')
+            .eq('id', token.id)
             .single();
 
           if (profile) {
-            (session.user as any).id = profile.id; // Map to Supabase UUID
             (session.user as any).reputation = profile.reputation;
-          } else {
-            console.warn(`No profile found for login: ${login}`);
           }
         } catch (e) {
           console.error("Session profile sync error:", e);
@@ -68,100 +152,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     },
-    async signIn({ user, account, profile: githubProfile }: any) {
-      if (account?.provider === "github") {
-        const username = githubProfile.login;
-        const avatar_url = githubProfile.avatar_url;
-        const full_name = githubProfile.name;
-
-        //generate a valid UUID from the numeric GitHub ID
-        const supabaseId = uuidv5(user.id, GITHUB_NAMESPACE);
-
-        try {
-          let syncEmail = user.email;
-          console.log(`[AUTH] Synchronizing user: ${username} (Default email: ${syncEmail})`);
-
-          if (account.access_token) {
-            try {
-              console.log(`[AUTH] Fetching primary email from GitHub for ${username}...`);
-              const emailRes = await fetch("https://api.github.com/user/emails", {
-                headers: {
-                  Authorization: `Bearer ${account.access_token}`,
-                  "Accept": "application/vnd.github.v3+json",
-                },
-              });
-              
-              if (emailRes.ok) {
-                const emails = await emailRes.json();
-                console.log(`[AUTH] Found ${emails.length} emails for ${username}`);
-                const primaryEmail = emails.find((e: any) => e.primary && e.verified);
-                if (primaryEmail) {
-                  syncEmail = primaryEmail.email;
-                  console.log(`[AUTH] Primary verified email identified: ${syncEmail}`);
-                } else if (emails.length > 0) {
-                  const fallback = emails.find((e: any) => e.verified)?.email || emails[0].email;
-                  syncEmail = fallback;
-                  console.log(`[AUTH] Falling back to: ${syncEmail}`);
-                }
-              } else {
-                console.error(`[AUTH] GitHub Email API error: ${emailRes.status}`);
-              }
-            } catch (e) {
-              console.error("[AUTH] Error fetching GitHub emails:", e);
-            }
-          } else {
-            console.warn(`[AUTH] No access token found in account for ${username}`);
-          }
-
-          // Check if profile exists by username (legacy sync) or supabaseId
-          const { data: existingProfile } = await supabaseAdmin
-            .from('profiles')
-            .select('id')
-            .or(`username.eq.${username},id.eq.${supabaseId}`)
-            .maybeSingle();
-
-          if (existingProfile) {
-            // Update existing
-            const { error: updateError } = await supabaseAdmin
-              .from('profiles')
-              .update({
-                email: syncEmail,
-                avatar_url,
-                full_name,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', existingProfile.id);
-
-            if (updateError) console.error("Error updating profile:", updateError);
-          } else {
-            // Create new
-            const { error: insertError } = await supabaseAdmin
-              .from('profiles')
-              .insert({
-                id: supabaseId,
-                username,
-                email: syncEmail,
-                avatar_url,
-                full_name,
-                role: 'contributor'
-              });
-
-            if (insertError) {
-              console.error("CRITICAL: Error creating profile in Supabase. Check if you dropped the fkey constraint as requested:", insertError);
-            }
-          }
-        } catch (e) {
-          console.error("SignIn profile sync error:", e);
-        }
-      }
-      return true;
-    },
   },
 });
 
-
 export async function getRequestIdentity(request?: Request) {
-  // 1. Try session first (NextAuth)
   const session = await auth();
   if (session?.user) {
     return {
@@ -170,7 +164,6 @@ export async function getRequestIdentity(request?: Request) {
     };
   }
 
-  // 2. Try API Key (Bearer Token)
   if (request) {
     const authHeader = request.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
