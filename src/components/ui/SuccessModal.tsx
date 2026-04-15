@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Zap, ArrowRight, Plus, ExternalLink, X, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Zap, ArrowRight, Plus, ExternalLink, X, AlertCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface SuccessModalProps {
@@ -13,6 +13,8 @@ interface SuccessModalProps {
   actionText?: string;
   isError?: boolean;
   hideSecondaryAction?: boolean;
+  sessionId?: string;
+  bountyId?: string;
 }
 
 export default function SuccessModal({
@@ -23,10 +25,14 @@ export default function SuccessModal({
   actionHref = "/",
   actionText = "Dashboard",
   isError = false,
-  hideSecondaryAction = false
+  hideSecondaryAction = false,
+  sessionId,
+  bountyId
 }: SuccessModalProps) {
   const [hasClickedCheckout, setHasClickedCheckout] = React.useState(false);
   const [confetti, setConfetti] = React.useState<any[]>([]);
+  const [isVerifying, setIsVerifying] = React.useState(false);
+  const [verificationError, setVerificationError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (isOpen && !isError) {
@@ -41,18 +47,60 @@ export default function SuccessModal({
       }));
       setConfetti(particles);
       
-      // Clear after 4s
       const timer = setTimeout(() => setConfetti([]), 4000);
       return () => clearTimeout(timer);
     }
   }, [isOpen, isError]);
 
+  // Polling logic
+  React.useEffect(() => {
+    let intervalId: any;
+    
+    if (isOpen && hasClickedCheckout && sessionId && bountyId) {
+      intervalId = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/maintainer/bounty/status?sessionId=${sessionId}&bountyId=${bountyId}`);
+          const data = await res.json();
+          if (data.success && data.isFunded) {
+             // SUCCESS! The proxy already updated the DB.
+             setIsVerifying(false);
+             window.location.href = '/?payment_success=true';
+          }
+        } catch (e) {
+          console.error('Polling error:', e);
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isOpen, hasClickedCheckout, sessionId, bountyId]);
+
   const handleCheckoutClick = () => {
     setHasClickedCheckout(true);
   };
 
-  const handleVerify = () => {
-    window.location.reload();
+  const handleVerifyManually = async () => {
+    if (!sessionId || !bountyId) return;
+    
+    setIsVerifying(true);
+    setVerificationError(null);
+    
+    try {
+      const res = await fetch(`/api/maintainer/bounty/status?sessionId=${sessionId}&bountyId=${bountyId}`);
+      const data = await res.json();
+      
+      if (data.success && data.isFunded) {
+        window.location.href = '/?payment_success=true';
+      } else {
+        setVerificationError("Still waiting for payment. Please complete the Locus checkout first.");
+        setIsVerifying(false);
+      }
+    } catch (e) {
+      setVerificationError("Technical error during verification. Please try again.");
+      setIsVerifying(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -101,12 +149,21 @@ export default function SuccessModal({
             <div className={`absolute -inset-4 ${isError ? 'bg-red-500/20' : 'bg-accent/20'} rounded-full blur-2xl animate-pulse`} />
           </div>
 
-          <h3 className="text-4xl font-black text-foreground uppercase tracking-tight mb-4 italic">{hasClickedCheckout ? 'Awaiting Payment' : title}</h3>
+          <h3 className="text-4xl font-black text-foreground uppercase tracking-tight mb-4 italic">
+            {hasClickedCheckout ? 'Awaiting Payment' : title}
+          </h3>
           <p className="text-muted-foreground font-medium mb-12 leading-relaxed text-lg">
             {hasClickedCheckout 
-              ? 'Please finish the escrow payment in the new tab. Once done, click the refresh button below.' 
+              ? 'Finish the payment in the new tab. This window will automatically update once it detects the payment confirmation.' 
               : message}
           </p>
+
+          {verificationError && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-500 rounded-2xl flex items-center gap-2 text-sm font-bold">
+              <AlertCircle size={16} />
+              {verificationError}
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             {!isError ? (
@@ -124,11 +181,16 @@ export default function SuccessModal({
                   </a>
                 ) : (
                   <button
-                    onClick={handleVerify}
-                    className="flex-1 py-5 bg-surface-high border-2 border-accent text-accent rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
+                    disabled={isVerifying}
+                    onClick={handleVerifyManually}
+                    className="flex-1 py-5 bg-surface-high border-2 border-accent text-accent rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <CheckCircle2 size={16} />
-                    I've Paid, Refresh Dashboard
+                    {isVerifying ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={16} />
+                    )}
+                    {isVerifying ? 'Verifying...' : 'Verify Status'}
                   </button>
                 )}
                 

@@ -161,6 +161,37 @@ export async function createCheckoutSession(params: {
   }
 }
 
+export async function getCheckoutSessionStatus(sessionId: string): Promise<LocusResponse<{ status: string; id: string }>> {
+  try {
+    if (!LOCUS_API_KEY) {
+      return { success: false, error: 'Configuration Error', message: 'Locus API Key is not set' };
+    }
+
+    const response = await fetch(`${LOCUS_API_BASE}/checkout/sessions/${sessionId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${LOCUS_API_KEY}`,
+      },
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.error || 'API_ERROR', message: data.message };
+    }
+
+    // data is { success: true, data: { id, status, ... } }
+    return {
+      success: true,
+      data: {
+        id: data.data.id || data.data.session_id,
+        status: data.data.status
+      }
+    };
+  } catch (error: any) {
+    return { success: false, error: 'NETWORK_ERROR', message: error.message };
+  }
+}
+
 export function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
   try {
     const crypto = require('crypto');

@@ -40,6 +40,8 @@ export default function CreateBountyPage() {
     actionText?: string;
     actionHref?: string;
     hideSecondaryAction?: boolean;
+    sessionId?: string;
+    bountyId?: string;
   }>({ title: '', message: '' });
 
   // Repos & Issues State
@@ -145,7 +147,9 @@ export default function CreateBountyPage() {
           message: "Your bounty has been created. Click below to proceed to Locus secure checkout and fund the escrow.",
           actionText: "Proceed to Checkout",
           actionHref: result.data.locus.checkoutUrl,
-          hideSecondaryAction: true
+          hideSecondaryAction: true,
+          sessionId: result.data.locus.sessionId,
+          bountyId: result.data.bounty.id
         });
         setIsError(false);
         setShowSuccess(true);
@@ -419,6 +423,8 @@ export default function CreateBountyPage() {
         actionHref={successData.actionHref || "/"}
         actionText="Proceed to Escrow"
         hideSecondaryAction={true}
+        sessionId={(successData as any).sessionId}
+        bountyId={(successData as any).bountyId}
       />
     </>
   );

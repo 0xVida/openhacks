@@ -79,7 +79,9 @@ export default function TopNav() {
             <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-accent rounded-full border-2 border-surface-low"></span>
           </button>
           
-          {role === 'maintainer' && <BalanceDisplay />}
+          <div className="hidden md:block">
+            {role === 'maintainer' && <BalanceDisplay />}
+          </div>
           
           <ThemeToggle />
           
