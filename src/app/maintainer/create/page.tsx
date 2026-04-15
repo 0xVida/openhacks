@@ -48,6 +48,10 @@ export default function CreateBountyPage() {
   const [repo, setRepo] = useState(contextRepo || '');
   const [issueNumber, setIssueNumber] = useState('');
   const [reward, setReward] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+
+  // Predefined Skill Options
+  const AVAILABLE_SKILLS = ['Rust', 'Next.js', 'Solidity', 'AI', 'Security', 'DevOps'];
 
   // Fetch Repos on mount
   React.useEffect(() => {
@@ -95,6 +99,10 @@ export default function CreateBountyPage() {
     setShowIssuePicker(false);
   };
 
+  const toggleTag = (tag: string) => {
+    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+  };
+
   const handleLaunchBounty = async () => {
     if (!title || !description || !repo || !issueNumber || !reward) {
       setSuccessData({
@@ -119,6 +127,7 @@ export default function CreateBountyPage() {
           repo,
           issueNumber,
           reward: parseFloat(reward),
+          tags,
         }),
       });
 
@@ -279,6 +288,27 @@ export default function CreateBountyPage() {
                     placeholder="Describe the scope of work, technical requirements, and acceptance criteria..."
                     className="w-full bg-surface-high border border-border-subtle rounded-3xl py-4 px-6 text-foreground focus:outline-none focus:border-accent/50 font-medium placeholder:opacity-30 scrollbar-hide text-sm"
                   />
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-xs font-black text-foreground uppercase tracking-widest block">Skill Tags</label>
+                  <div className="flex flex-wrap gap-2">
+                    {AVAILABLE_SKILLS.map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`
+                          px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                          ${tags.includes(tag) 
+                            ? 'bg-accent text-white border-accent shadow-md shadow-accent/20' 
+                            : 'bg-surface-high text-muted-foreground border-border-subtle hover:border-accent/40'}
+                        `}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="space-y-4">

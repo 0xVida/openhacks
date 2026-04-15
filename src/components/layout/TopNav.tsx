@@ -25,11 +25,13 @@ import {
   Calendar
 } from 'lucide-react';
 import Github from '@/components/ui/GithubIcon';
+import Leaderboard from '@/components/ui/Leaderboard';
 
 import { signIn, signOut } from 'next-auth/react';
 
 export default function TopNav() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = React.useState(false);
   const { role, setRole, githubUser } = useRole();
 
   return (
@@ -82,10 +84,13 @@ export default function TopNav() {
           <ThemeToggle />
           
           {role === 'contributor' && (
-            <div className="hidden sm:flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full font-bold text-xs ring-1 ring-accent/20">
-              <Trophy size={14} />
+            <button 
+              onClick={() => setIsLeaderboardOpen(true)}
+              className="flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full font-bold text-xs ring-1 ring-accent/20 hover:bg-accent/20 transition-all group overflow-hidden"
+            >
+              <Trophy size={14} className="group-hover:rotate-12 transition-transform" />
               <span>{(githubUser as any)?.reputation || 0}</span>
-            </div>
+            </button>
           )}
 
           {githubUser && (
@@ -172,6 +177,10 @@ export default function TopNav() {
       </div>
 
 
+      <Leaderboard 
+        isOpen={isLeaderboardOpen} 
+        onClose={() => setIsLeaderboardOpen(false)} 
+      />
     </nav>
   );
 }

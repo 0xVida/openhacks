@@ -119,3 +119,31 @@ body {
   filter: blur(0);
   transition: filter 0.3s ease;
 }
+
+/* Success Confetti Animation */
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  z-index: 50;
+  animation: confetti-fall linear forwards;
+}
+
+/* Premium Utilities */
+.text-glow {
+  text-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+.bg-premium-gradient {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+}
+
+.shadow-premium {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1), 0 0 15px rgba(99, 102, 241, 0.05);
+}
