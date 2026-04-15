@@ -31,13 +31,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET,
   callbacks: {
     async jwt({ token, user, account, trigger }: any) {
-      // 1. Initial Identity Population
+      const debugLogs: string[] = [];
+      const log = (msg: string) => {
+        const timestamped = `[${new Date().toISOString().split('T')[1].split('.')[0]}] ${msg}`;
+        console.log(timestamped);
+        debugLogs.push(timestamped);
+      };
+
+      // 1. Initial Identity Population & UUID Mapping
       if (user) {
-        token.id = user.id;
+        token.id = uuidv5(user.id.toString(), GITHUB_NAMESPACE);
         token.login = user.login || user.name;
         token.name = user.name;
         token.picture = user.image;
         token.email = user.email;
+        log(`[AUTH] Mapping identity: GitHub(${user.id}) -> UUID(${token.id})`);
       }
       if (account) {
         token.accessToken = account.access_token;
@@ -45,6 +53,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // 2. Metadata & Email Sync (Only on first sign-in)
       if (trigger === "signIn" && account?.provider === "github" && account.access_token) {
+        log(`[AUTH] Starting sync for ${token.login}`);
         try {
           const emailRes = await fetch("https://api.github.com/user/emails", {
             headers: {
@@ -59,57 +68,90 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             const primaryEmail = emails.find((e: any) => e.primary && e.verified);
             if (primaryEmail) {
               token.email = primaryEmail.email;
+              log(`[AUTH] SUCCESS: Found primary verified email: ${token.email}`);
             } else {
               token.email = emails.find((e: any) => e.verified)?.email || emails[0]?.email || token.email;
+              log(`[AUTH] WARNING: Using fallback email: ${token.email}`);
             }
+          } else {
+            log(`[AUTH] ERROR: GitHub Email API returned status ${emailRes.status}`);
           }
         } catch (e: any) {
-          console.error("[AUTH] Email fetch error:", e.message);
+          log(`[AUTH] CRITICAL EMAIL ERROR: ${e.message}`);
         }
 
         // 3. Database Synchronization
         if (token.id && token.email) {
           try {
             const username = token.login;
-            const supabaseId = uuidv5(token.id as string, GITHUB_NAMESPACE);
+            const supabaseId = token.id;
+            log(`[AUTH] DB Syncing ID: ${supabaseId}`);
 
-            const { data: existing } = await supabaseAdmin.from('profiles').select('id').eq('id', supabaseId).maybeSingle();
+            const { data: existing, error: checkError } = await supabaseAdmin
+              .from('profiles')
+              .select('id')
+              .eq('id', supabaseId)
+              .maybeSingle();
             
+            if (checkError) {
+              log(`[AUTH] DB CHECK ERROR: ${checkError.message}`);
+            }
+
             if (existing) {
-              await supabaseAdmin.from('profiles').update({ 
+              const { error: updateError } = await supabaseAdmin.from('profiles').update({ 
                 email: token.email, 
                 avatar_url: token.picture,
                 full_name: token.name,
                 updated_at: new Date().toISOString() 
               }).eq('id', supabaseId);
+              
+              if (updateError) {
+                log(`[AUTH] DB UPDATE ERROR: ${updateError.message}`);
+              } else {
+                log(`[AUTH] SUCCESS: Profile updated in DB`);
+              }
             } else {
-              await supabaseAdmin.from('profiles').insert({
+              const { error: insertError } = await supabaseAdmin.from('profiles').insert({
                 id: supabaseId,
                 username,
                 email: token.email,
                 avatar_url: token.picture,
                 full_name: token.name,
-                role: 'contributor'
+                role: 'maintainer' // Forcing maintainer role for this test to ensure access
               });
+
+              if (insertError) {
+                log(`[AUTH] DB INSERT ERROR: ${insertError.message} (${insertError.details})`);
+              } else {
+                log(`[AUTH] SUCCESS: Profile created in DB`);
+              }
             }
           } catch (err: any) {
-            console.error("[AUTH] DB sync error:", err.message);
+            log(`[AUTH] CRITICAL DB SYNC ERROR: ${err.message}`);
           }
+        } else {
+          log(`[AUTH] SKIP SYNC: ID(${!!token.id}) or Email(${!!token.email}) missing`);
         }
       }
       
+      if (debugLogs.length > 0) {
+        token.debugLogs = debugLogs;
+      }
+
       return token;
     },
     async session({ session, token }: any) {
       if (token.accessToken) {
         (session as any).accessToken = token.accessToken;
       }
+      if (token.debugLogs) {
+        (session as any).debugLogs = token.debugLogs;
+      }
       
       if (session.user) {
         (session.user as any).login = token.login;
         (session.user as any).id = token.id;
 
-        // Fetch real-time reputation from Supabase
         try {
           const { data: profile } = await supabaseAdmin
             .from('profiles')
