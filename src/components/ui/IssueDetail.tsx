@@ -89,6 +89,28 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
                 To claim this bounty, please submit a pull request on GitHub referencing this issue. Once the maintainer merges your PR, the payment will be automatically triggered.
              </p>
           </div>
+
+          {/* Mobile/In-line funding action */}
+          {role === 'maintainer' && issue.status === 'pending' && issue.locus_checkout_url && (
+            <div className="md:hidden mt-8 p-6 bg-surface-mid rounded-3xl border-2 border-accent/20 flex flex-col gap-4">
+              <div className="flex items-center gap-3 text-accent mb-2">
+                <Award size={24} />
+                <span className="text-sm font-black uppercase tracking-widest">Unfunded Bounty</span>
+              </div>
+              <p className="text-sm text-foreground/80 leading-relaxed font-medium mb-2">
+                 Complete the escrow payment to activate this bounty for the community.
+              </p>
+              <a 
+                href={issue.locus_checkout_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-5 bg-accent text-white rounded-2xl font-black transition-all shadow-xl shadow-accent/20 tracking-tight flex items-center justify-center gap-3 group active:scale-95 text-center no-underline"
+              >
+                 <Zap size={18} className="fill-current" />
+                 COMPLETE ESCROW
+              </a>
+            </div>
+          )}
         </div>
       </div>
       

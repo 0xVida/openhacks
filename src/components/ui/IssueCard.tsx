@@ -29,7 +29,7 @@ export default function IssueCard({ issue, active }: IssueCardProps) {
     <div className={`p-4 transition-all cursor-pointer group ${active ? 'bg-surface-high ring-1 ring-accent/20' : 'hover:bg-surface-mid'} border-sleek`}>
         <div className="flex flex-wrap gap-2">
           {issue.status === 'pending' ? (
-            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-black uppercase tracking-widest flex items-center gap-1 animate-pulse">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-black font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20">
                PENDING FUNDING
             </span>
           ) : (

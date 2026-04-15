@@ -416,8 +416,9 @@ export default function CreateBountyPage() {
         title={successData.title}
         message={successData.message}
         isError={isError}
-        actionHref="/"
-        actionText="Dashboard"
+        actionHref={successData.actionHref || "/"}
+        actionText="Proceed to Escrow"
+        hideSecondaryAction={true}
       />
     </>
   );
