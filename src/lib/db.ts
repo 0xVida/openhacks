@@ -101,7 +101,7 @@ export const db = {
 
     if (error) {
       console.error('Error adding bounty:', error);
-      return null;
+      throw new Error(`DATABASE_REJECTION: ${error.message} - ${error.details}`);
     }
 
     // Reward maintainer with reputation

@@ -95,10 +95,14 @@ export async function POST(request: Request) {
         }
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating bounty:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal Server Error' },
+      { 
+        success: false, 
+        error: error.message || 'Internal Server Error',
+        details: error
+      },
       { status: 500 }
     );
   }

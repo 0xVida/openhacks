@@ -153,6 +153,11 @@ export default function CreateBountyPage() {
         setIsError(false);
         setShowSuccess(true);
       } else {
+        console.group('%c[BOUNTY-API-ERROR] Handled Exception', 'color: #ef4444; font-weight: bold;');
+        console.error('Error:', result.error);
+        if (result.details) console.dir(result.details);
+        console.groupEnd();
+
         setSuccessData({
           title: "Launch Failed",
           message: result.error || result.message || "An error occurred while creating the bounty. Please check your balance and try again."
