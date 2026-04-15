@@ -136,15 +136,15 @@ export default function CreateBountyPage() {
       if (result.success && result.data?.locus?.checkoutUrl) {
         setSuccessData({
           title: "Bounty Initialized",
-          message: "Redirecting to Locus secure checkout to fund your bounty..."
+          message: "Opening Locus secure checkout in a new tab. Once funded, your bounty will automatically activate on the dashboard."
         });
         setIsError(false);
         setShowSuccess(true);
         
-        // Automatic redirect to Locus after a brief confirmation
+        // Open Locus in a new tab so they don't lose their place
         setTimeout(() => {
-          window.location.href = result.data.locus.checkoutUrl;
-        }, 2000);
+          window.open(result.data.locus.checkoutUrl, '_blank');
+        }, 1500);
       } else if (result.success) {
         setSuccessData({
           title: "Bounty Launched",

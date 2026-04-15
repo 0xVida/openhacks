@@ -49,13 +49,17 @@ export async function POST(request: Request) {
 
     // 3. Create Locus Checkout Session
     const { createCheckoutSession } = await import('@/lib/locus');
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';
+    // Ensure we have a valid absolute URL for the webhook callback
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 
+                    process.env.AUTH_URL ||
+                    process.env.NEXTAUTH_URL ||
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3001');
     
-    console.log(`Creating Locus Session for: ${repo}#${issueNumber}`);
+    console.log(`Creating Locus Session for: ${repo}#${issueNumber} using baseUrl: ${baseUrl}`);
     const sessionResponse = await createCheckoutSession({
       amount: parseFloat(reward),
       description: `Bounty for ${repo}#${issueNumber}: ${title}`,
-      successUrl: `${baseUrl}/maintainer/bounties?success=true`,
+      successUrl: `${baseUrl}/?payment_success=true`, // Redirect back to dashboard root
       cancelUrl: `${baseUrl}/maintainer/bounties?cancelled=true`,
       webhookUrl: `${baseUrl}/api/webhooks/locus`,
       metadata: { repo, issueNumber, maintainerId: user.id }
