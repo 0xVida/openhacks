@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -13,7 +14,7 @@
   --color-border-subtle: var(--border-subtle);
   --color-border-hover: var(--border-hover);
   --color-muted-foreground: var(--muted-foreground);
-  
+
   --font-sans: "Inter", var(--font-geist-sans);
 }
 
@@ -39,7 +40,8 @@
     --border-subtle: #ffffff10;
     --border-hover: #ffffff20;
     --sidebar-accent: #818cf8;
-    --muted-foreground: #a3a3a3; /* Bright zinc for dark mode */
+    --muted-foreground: #a3a3a3;
+    /* Bright zinc for dark mode */
   }
 }
 
@@ -122,8 +124,15 @@ body {
 
 /* Success Confetti Animation */
 @keyframes confetti-fall {
-  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 .confetti {
