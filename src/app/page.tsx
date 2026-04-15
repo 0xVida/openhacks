@@ -1,23 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { Filter, SortAsc, ArrowLeft, Plus, Code2, ExternalLink, Shield, Loader2 } from 'lucide-react';
+import { Filter, SortAsc, ArrowLeft, Plus, Code2, ExternalLink, Shield, Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import IssueCard, { Issue } from '@/components/ui/IssueCard';
 import IssueDetail from '@/components/ui/IssueDetail';
 import { useRole } from '@/components/providers/role-context';
 import Github from '@/components/ui/GithubIcon';
 import SuccessModal from '@/components/ui/SuccessModal';
 import OnboardingModal from '@/components/ui/OnboardingModal';
+import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function Home() {
+function HomeContent() {
   const { role, registeredRepos, githubUser } = useRole();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const [bounties, setBounties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'info', text: string } | null>(null);
   
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
@@ -25,6 +30,28 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Capture payment status from URL
+  useEffect(() => {
+    const success = searchParams.get('payment_success');
+    const cancelled = searchParams.get('cancelled');
+    const error = searchParams.get('error');
+
+    if (success) {
+      setStatusMessage({ type: 'success', text: 'Bounty successfully funded and activated!' });
+      // Clean URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } else if (cancelled) {
+      setStatusMessage({ type: 'info', text: 'Payment session was cancelled. The bounty remains as "Pending Funding".' });
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    } else if (error) {
+      setStatusMessage({ type: 'info', text: `Operation failed: ${error}` });
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
 
   // Load persistence
   React.useEffect(() => {
@@ -127,7 +154,7 @@ export default function Home() {
       }
     }
     fetchBounties();
-  }, [role, registeredRepos]);
+  }, [role, registeredRepos, githubUser]);
 
   const handleSelectIssue = (issue: any) => {
     setSelectedIssue(issue);
@@ -162,6 +189,22 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {statusMessage && (
+            <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 animate-in slide-in-from-top-4 duration-500 ${
+              statusMessage.type === 'success' 
+                ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400' 
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'
+            }`}>
+              {statusMessage.type === 'success' ? <CheckCircle2 size={18} className="shrink-0 mt-0.5" /> : <AlertCircle size={18} className="shrink-0 mt-0.5" />}
+              <div className="flex-1">
+                <p className="text-xs font-bold leading-tight">{statusMessage.text}</p>
+              </div>
+              <button onClick={() => setStatusMessage(null)} className="p-1 hover:bg-black/5 rounded-lg transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+          )}
 
           {role === 'maintainer' && (
             <Link 
@@ -273,24 +316,39 @@ export default function Home() {
            {selectedIssue ? (
              <IssueDetail issue={selectedIssue} />
            ) : (
-        <div className="h-full flex flex-col items-center justify-center bg-surface-low opacity-30">
-          <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
-            <div className="relative mb-6">
-               <Loader2 className="animate-spin text-accent" size={48} />
-               <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-1 h-1 bg-accent rounded-full" />
-               </div>
-            </div>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-foreground/50">
-               {role === 'maintainer' ? 'View active bounties you created' : 'Select a bounty and apply'}
-            </p>
-            <div className="w-12 h-0.5 bg-accent/20 mt-4 rounded-full" />
-          </div>
-        </div>
+         <div className="h-full flex flex-col items-center justify-center bg-surface-low opacity-30">
+           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
+             <div className="relative mb-6">
+                <Loader2 className="animate-spin text-accent" size={48} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-1 h-1 bg-accent rounded-full" />
+                </div>
+             </div>
+             <p className="text-sm font-black uppercase tracking-[0.2em] text-foreground/50">
+                {role === 'maintainer' ? 'View active bounties you created' : 'Select a bounty and apply'}
+             </p>
+             <div className="w-12 h-0.5 bg-accent/20 mt-4 rounded-full" />
+           </div>
+         </div>
            )}
         </div>
       </div>
       <OnboardingModal />
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-surface-low">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-accent" size={48} />
+          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground animate-pulse">Initializing OpenHacks...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

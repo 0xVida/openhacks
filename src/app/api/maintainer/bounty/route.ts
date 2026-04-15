@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       amount: parseFloat(reward),
       description: `Bounty for ${repo}#${issueNumber}: ${title}`,
       successUrl: `${baseUrl}/api/locus/verify?bountyId=${newBounty.id}`,
-      cancelUrl: `${baseUrl}/maintainer/bounties?cancelled=true`,
+      cancelUrl: `${baseUrl}/?cancelled=true`,
       webhookUrl: `${baseUrl}/api/webhooks/locus`, // Still sending just in case
       metadata: { 
         repo, 
