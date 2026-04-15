@@ -74,10 +74,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const avatar_url = githubProfile.avatar_url;
         const full_name = githubProfile.name;
 
-        // Generate a valid UUID from the numeric GitHub ID
+        //generate a valid UUID from the numeric GitHub ID
         const supabaseId = uuidv5(user.id, GITHUB_NAMESPACE);
 
         try {
+          let syncEmail = user.email;
+          if (account.access_token) {
+            try {
+              const emailRes = await fetch("https://api.github.com/user/emails", {
+                headers: {
+                  Authorization: `token ${account.access_token}`,
+                },
+              });
+              if (emailRes.ok) {
+                const emails = await emailRes.json();
+                const primaryEmail = emails.find((e: any) => e.primary && e.verified);
+                if (primaryEmail) {
+                  syncEmail = primaryEmail.email;
+                } else if (emails.length > 0) {
+                  syncEmail = emails.find((e: any) => e.verified)?.email || emails[0].email;
+                }
+              }
+            } catch (e) {
+              console.error("Error fetching GitHub emails:", e);
+            }
+          }
+
           // Check if profile exists by username (legacy sync) or supabaseId
           const { data: existingProfile } = await supabaseAdmin
             .from('profiles')
@@ -90,6 +112,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             const { error: updateError } = await supabaseAdmin
               .from('profiles')
               .update({
+                email: syncEmail,
                 avatar_url,
                 full_name,
                 updated_at: new Date().toISOString()
@@ -104,7 +127,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               .insert({
                 id: supabaseId,
                 username,
-                email: user.email,
+                email: syncEmail,
                 avatar_url,
                 full_name,
                 role: 'contributor'
