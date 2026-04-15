@@ -12,6 +12,7 @@ interface SuccessModalProps {
   actionHref?: string;
   actionText?: string;
   isError?: boolean;
+  hideSecondaryAction?: boolean;
 }
 
 export default function SuccessModal({
@@ -21,7 +22,8 @@ export default function SuccessModal({
   message,
   actionHref = "/",
   actionText = "Dashboard",
-  isError = false
+  isError = false,
+  hideSecondaryAction = false
 }: SuccessModalProps) {
   if (!isOpen) return null;
 
@@ -107,13 +109,15 @@ export default function SuccessModal({
                   <Zap size={16} fill="currentColor" />
                   {actionText}
                 </Link>
-                <button
-                  onClick={onClose}
-                  className="flex-1 py-5 bg-surface-mid border border-border-subtle text-foreground rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest hover:bg-surface-high transition-colors flex items-center justify-center gap-2 box-border active:scale-95"
-                >
-                  <Plus size={16} />
-                  Post Another
-                </button>
+                {!hideSecondaryAction && (
+                  <button
+                    onClick={onClose}
+                    className="flex-1 py-5 bg-surface-mid border border-border-subtle text-foreground rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest hover:bg-surface-high transition-colors flex items-center justify-center gap-2 box-border active:scale-95"
+                  >
+                    <Plus size={16} />
+                    Post Another
+                  </button>
+                )}
               </>
             ) : (
               <button

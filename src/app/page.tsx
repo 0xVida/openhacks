@@ -94,10 +94,16 @@ export default function Home() {
             reward: b.reward_amount,
             status: b.status,
             maintainer_id: b.maintainer_id,
+            locus_checkout_url: b.locus_checkout_url,
             labels: b.tags && b.tags.length > 0 ? b.tags : ['GitHub Issue']
           }));
 
           const filtered = transformed.filter((b: any) => {
+            // Include pending only if it matches current maintainer
+            if (b.status === 'pending') {
+              return githubUser?.id && b.maintainer_id === githubUser.id;
+            }
+
             const matchesRole = role === 'maintainer' 
               ? (registeredRepos.includes(b.repoFullName) || (githubUser?.id && b.maintainer_id === githubUser.id))
               : true;

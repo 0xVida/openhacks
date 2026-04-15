@@ -34,7 +34,13 @@ export default function CreateBountyPage() {
   const [isFetchingIssues, setIsFetchingIssues] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
-  const [successData, setSuccessData] = useState<{ title: string, message: string }>({ title: '', message: '' });
+  const [successData, setSuccessData] = useState<{ 
+    title: string; 
+    message: string;
+    actionText?: string;
+    actionHref?: string;
+    hideSecondaryAction?: boolean;
+  }>({ title: '', message: '' });
 
   // Repos & Issues State
   const [repos, setRepos] = useState<any[]>([]);
@@ -136,15 +142,13 @@ export default function CreateBountyPage() {
       if (result.success && result.data?.locus?.checkoutUrl) {
         setSuccessData({
           title: "Bounty Initialized",
-          message: "Opening Locus secure checkout in a new tab. Once funded, your bounty will automatically activate on the dashboard."
+          message: "Your bounty has been created. Click below to proceed to Locus secure checkout and fund the escrow.",
+          actionText: "Proceed to Checkout",
+          actionHref: result.data.locus.checkoutUrl,
+          hideSecondaryAction: true
         });
         setIsError(false);
         setShowSuccess(true);
-        
-        // Open Locus in a new tab so they don't lose their place
-        setTimeout(() => {
-          window.open(result.data.locus.checkoutUrl, '_blank');
-        }, 1500);
       } else if (result.success) {
         setSuccessData({
           title: "Bounty Launched",
@@ -317,8 +321,8 @@ export default function CreateBountyPage() {
                         onClick={() => toggleTag(tag)}
                         className={`
                           px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
-                          ${tags.includes(tag) 
-                            ? 'bg-accent text-white border-accent shadow-md shadow-accent/20' 
+                          ${tags.includes(tag)
+                            ? 'bg-accent text-white border-accent shadow-md shadow-accent/20'
                             : 'bg-surface-high text-muted-foreground border-border-subtle hover:border-accent/40'}
                         `}
                       >
@@ -346,13 +350,13 @@ export default function CreateBountyPage() {
               <h2 className="text-[10px] font-black text-accent uppercase tracking-[0.2em] mb-6">Execution & Reward</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                   <div className="bg-surface-mid border border-border-subtle rounded-3xl p-6 flex flex-col gap-4 h-full">
-                     <label className="text-xs font-black text-foreground uppercase tracking-widest">Agent Workflow</label>
-                     <div className="flex items-start gap-3 text-[10px] text-muted-foreground bg-black/5 p-4 rounded-xl border border-border-subtle italic leading-relaxed">
-                        <Zap size={16} className="shrink-0 text-accent opacity-70 mt-0.5" />
-                        <span>This bounty is <strong>Open</strong>. Intelligent agents and contributors will submit PRs directly to the repository. The maintainer will merge and reward the most effective implementation.</span>
-                     </div>
-                   </div>
+                  <div className="bg-surface-mid border border-border-subtle rounded-3xl p-6 flex flex-col gap-4 h-full">
+                    <label className="text-xs font-black text-foreground uppercase tracking-widest">Agent Workflow</label>
+                    <div className="flex items-start gap-3 text-[10px] text-muted-foreground bg-black/5 p-4 rounded-xl border border-border-subtle italic leading-relaxed">
+                      <Zap size={16} className="shrink-0 text-accent opacity-70 mt-0.5" />
+                      <span>This bounty is <strong>Open</strong>. Intelligent agents and contributors will submit PRs directly to the repository. The maintainer will merge and reward the most effective implementation.</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-4">

@@ -26,6 +26,7 @@ export interface Bounty {
   funding_status?: 'unfunded' | 'funded';
   locus_session_id?: string;
   locus_webhook_secret?: string;
+  locus_checkout_url?: string;
   funded_at?: string;
   created_at?: string;
   tags?: string[];
@@ -133,6 +134,17 @@ export const db = {
       await this.updateReputation(contributorGithub, 50);
     }
 
+    return data;
+  },
+
+  async getBounty(id: string): Promise<Bounty | null> {
+    const { data, error } = await supabaseAdmin
+      .from('bounties')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) return null;
     return data;
   },
 

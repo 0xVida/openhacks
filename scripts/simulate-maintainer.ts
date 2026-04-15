@@ -8,23 +8,30 @@ if (fs.existsSync(envPath)) {
 }
 
 /**
- * OpenHacks Maintainer Agent Simulation
+ * OpenHacks Maintainer Agent Simulation - PURE VERSION (No Mocks)
  * 
  * Workflow:
  * 1. Reads platform instructions.
- * 2. Creates a GitHub issue.
- * 3. Registers the bounty on OpenHacks.
- * 4. Funds the bounty via the Locus API.
+ * 2. Creates a GitHub issue via GH CLI.
+ * 3. Registers the bounty on OpenHacks API.
+ * 4. Funds the bounty via real Locus REST API.
+ * 5. Triggers the internal verification callback.
  */
 
 async function simulateMaintainer() {
     const OPENHACKS_API_KEY = process.env.OPENHACKS_API_KEY;
     const LOCUS_API_KEY = process.env.LOCUS_API_KEY;
     const REPO = process.env.REPO || '0xVida/openhacks';
-    const API_BASE = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';
+    
+    // Prioritize Production URL from Env
+    const API_BASE = process.env.AUTH_URL || 
+                    process.env.NEXTAUTH_URL || 
+                    process.env.NEXT_PUBLIC_URL || 
+                    'http://localhost:3001';
+
     const LOCUS_API_BASE = 'https://beta-api.paywithlocus.com/api';
 
-    console.log(`\n--- Simulation Context ---`);
+    console.log(`\n--- Pure Simulation Context ---`);
     console.log(`API_BASE: ${API_BASE}`);
     console.log(`REPO:     ${REPO}`);
     console.log(`OPENHACKS_KEY: ${OPENHACKS_API_KEY ? 'Present' : 'MISSING'}`);
@@ -67,7 +74,9 @@ async function simulateMaintainer() {
         body: JSON.stringify({
             repo: REPO,
             issueNumber: issueNumber,
-            reward: 1.00
+            reward: 1.00,
+            title: issueTitle,
+            description: issueBody
         })
     });
 
@@ -81,9 +90,9 @@ async function simulateMaintainer() {
     const { sessionId, checkoutUrl } = registerData.data.locus;
     const bountyId = registerData.data.bounty.id;
     console.log(`Bounty Registered. Session ID: ${sessionId}`);
-    console.log(`Checkout URL: ${checkoutUrl}`);
+    console.log(`Bounty ID:  ${bountyId}`);
 
-    console.log('\nPhase 4: Funding Locus Session...');
+    console.log('\nPhase 4: Funding Locus Session (REST API)...');
     const payResponse = await fetch(`${LOCUS_API_BASE}/checkout/agent/pay/${sessionId}`, {
         method: 'POST',
         headers: {
@@ -101,48 +110,33 @@ async function simulateMaintainer() {
         process.exit(1);
     }
 
-    console.log(`Payment Submitted. Transaction ID: ${payData.data?.transaction_id || 'Pending'}`);
+    console.log(`Payment Submitted to Locus. Transaction ID: ${payData.data?.transaction_id || 'Success'}`);
 
-    console.log('\nPhase 4.5: Simulating Locus Webhook Confirmation (Local Development)...');
-    const webhookPayload = JSON.stringify({
-        event: 'checkout.session.paid',
-        data: { sessionId }
+    console.log('\nPhase 5: Native Callback (Simulating Redirect to App)...');
+    // Instead of faking a webhook, we hit the real internal verification endpoint
+    // that the browser would hit when redirected back from Locus.
+    const verifyResponse = await fetch(`${API_BASE}/api/locus/verify?bountyId=${bountyId}&sim=true`, {
+        method: 'GET'
     });
 
-    const webhookResponse = await fetch(`${API_BASE}/api/webhooks/locus`, {
-        method: 'POST',
-        headers: {
-            'x-signature-256': 'local-sim', // Placeholder
-            'Content-Type': 'application/json'
-        },
-        body: webhookPayload
-    });
-
-    if (webhookResponse.ok) {
-        console.log('Local Webhook Simulation: SUCCESS (Bounty funding confirmed)');
+    if (verifyResponse.ok) {
+        console.log('Verification Callback: SUCCESS (App state updated naturally)');
     } else {
-        console.error('Local Webhook Simulation: FAILED', await webhookResponse.text());
+        console.error('Verification Callback: FAILED', await verifyResponse.text());
+        process.exit(1);
     }
 
-    console.log('\nPhase 5: Polling for funding confirmation...');
-    let isFunded = false;
-    for (let i = 0; i < 10; i++) {
-        process.stdout.write('.');
-        await new Promise(r => setTimeout(r, 3000));
+    console.log('\nPhase 6: Verifying final state in Dashboard API...');
+    const discoveryResponse = await fetch(`${API_BASE}/api/bounties`);
+    const discoveryData: any = await discoveryResponse.json();
+    const found = discoveryData.data.find((b: any) => b.id === bountyId);
 
-        const discoveryResponse = await fetch(`${API_BASE}/api/bounties`);
-        const discoveryData: any = await discoveryResponse.json();
-
-        const found = discoveryData.data.find((b: any) => b.id === bountyId);
-        if (found) {
-            isFunded = true;
-            console.log('\nSUCCESS: Bounty is now FUNDED and ACTIVE.');
-            break;
-        }
-    }
-
-    if (!isFunded) {
-        console.log('\nTimeout: Bounty is still pending. Check the Locus webhook status.');
+    if (found && found.status === 'open') {
+        console.log('\n🎉 SUCCESS: Bounty is fully PROVISIONED and OPEN on the platform.');
+    } else {
+        console.log('\n❌ FAILURE: Bounty status did not update as expected.');
+        console.log('Current Bounty Data:', found);
+        process.exit(1);
     }
 }
 

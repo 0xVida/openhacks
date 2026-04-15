@@ -136,6 +136,26 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
              VIEW ON GITHUB
           </a>
         )}
+
+        {role === 'maintainer' && issue.status === 'pending' && issue.locus_checkout_url && (
+          <div className="flex flex-col gap-4">
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+               <p className="text-[10px] font-black uppercase text-amber-600 mb-2">Unfunded Bounty</p>
+               <p className="text-xs text-foreground/80 leading-relaxed font-medium">
+                  This bounty is initialized but not yet funded. Complete the escrow payment to make it active for contributors.
+               </p>
+            </div>
+            <a 
+              href={issue.locus_checkout_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-5 bg-accent text-white hover:bg-accent-hover rounded-2xl font-black transition-all shadow-xl shadow-accent/20 tracking-tight flex items-center justify-center gap-3 group active:scale-95 text-center no-underline"
+            >
+               <Zap size={18} className="fill-current" />
+               COMPLETE ESCROW
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

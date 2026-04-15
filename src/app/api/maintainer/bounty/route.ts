@@ -1,126 +1,112 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { getIssueDetails } from '@/lib/github';
-import { auth } from '@/auth';
+import { getRequestIdentity } from '@/auth';
+import { createCheckoutSession } from '@/lib/locus';
 
 export async function POST(request: Request) {
   try {
-    const { getRequestIdentity } = await import('@/auth');
     const identity = await getRequestIdentity(request);
-    
     if (!identity) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { user } = identity;
+    const body = await request.json();
+    const { repo, issueNumber, reward, title, description, tags } = body;
 
-    let { title, description, repo, issueNumber, reward, tags } = await request.json();
-
+    // 1. Validation
     if (!repo || !issueNumber || !reward) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields (repo, issueNumber, reward)' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Ownership Hijacking Check
-    const { checkRepoAccess } = await import('@/lib/github');
-    const hasAccess = await checkRepoAccess(repo, user.login);
-    if (!hasAccess) {
-      return NextResponse.json(
-        { success: false, error: `You do not have write access to ${repo}. Only maintainers can create bounties.` },
-        { status: 403 }
-      );
-    }
-
-    // 2. Auto-fetch issue details if missing
-    if (!title || !description) {
-      const details = await getIssueDetails(repo, parseInt(issueNumber, 10));
-      if (details.success) {
-        title = title || details.title;
-        description = description || details.description;
-      } else if (!title) {
-        return NextResponse.json(
-          { success: false, error: 'Could not fetch issue details from GitHub. Please provide title and description manually.' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // 3. Create Locus Checkout Session
-    const { createCheckoutSession } = await import('@/lib/locus');
-    // Ensure we have a valid absolute URL for the webhook callback
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 
-                    process.env.AUTH_URL ||
-                    process.env.NEXTAUTH_URL ||
-                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3001');
-    
-    console.log(`Creating Locus Session for: ${repo}#${issueNumber} using baseUrl: ${baseUrl}`);
-    const sessionResponse = await createCheckoutSession({
-      amount: parseFloat(reward),
-      description: `Bounty for ${repo}#${issueNumber}: ${title}`,
-      successUrl: `${baseUrl}/?payment_success=true`, // Redirect back to dashboard root
-      cancelUrl: `${baseUrl}/maintainer/bounties?cancelled=true`,
-      webhookUrl: `${baseUrl}/api/webhooks/locus`,
-      metadata: { repo, issueNumber, maintainerId: user.id }
-    });
-
-    if (!sessionResponse.success || !sessionResponse.data) {
-      return NextResponse.json(
-        { success: false, error: 'Locus Session Error', message: sessionResponse.message },
-        { status: 500 }
-      );
-    }
-
-    // 4. Record Pending Bounty in DB
+    // 2. Add Bounty to DB first (as unfunded)
+    // This gives us the ID we need for the success callback
     const newBounty = await db.addBounty({
       title,
       description,
       repo_fullname: repo,
       issue_number: parseInt(issueNumber, 10),
       reward_amount: parseFloat(reward),
-      status: 'pending', // Starts in pending until funded
+      status: 'pending', 
       maintainer_id: user.id,
       funding_status: 'unfunded',
-      locus_session_id: sessionResponse.data.id,
-      locus_webhook_secret: sessionResponse.data.webhookSecret,
       tags: tags || []
     });
 
-    if (!newBounty) throw new Error('Failed to create bounty record');
+    if (!newBounty) {
+      throw new Error('Failed to create bounty record');
+    }
+
+    // 3. Create Locus session with the Bounty ID in the successUrl
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 
+                    process.env.AUTH_URL ||
+                    process.env.NEXTAUTH_URL ||
+                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3001');
+    
+    console.log(`Creating Locus Session for Bounty ${newBounty.id} (${repo}#${issueNumber})`);
+    
+    const sessionResponse = await createCheckoutSession({
+      amount: parseFloat(reward),
+      description: `Bounty for ${repo}#${issueNumber}: ${title}`,
+      successUrl: `${baseUrl}/api/locus/verify?bountyId=${newBounty.id}`,
+      cancelUrl: `${baseUrl}/maintainer/bounties?cancelled=true`,
+      webhookUrl: `${baseUrl}/api/webhooks/locus`, // Still sending just in case
+      metadata: { 
+        repo, 
+        issueNumber, 
+        maintainerId: user.id, 
+        bountyId: newBounty.id 
+      }
+    });
+
+    if (!sessionResponse.success || !sessionResponse.data) {
+      // If payment session fails, we keep the bounty as pending but flag the error
+      console.error('Locus Session Error:', sessionResponse.message);
+      return NextResponse.json(
+        { success: false, error: 'Locus Session Error', message: sessionResponse.message },
+        { status: 500 }
+      );
+    }
+
+    // 4. Update the bounty with the session details
+    await db.updateBounty(newBounty.id, {
+      locus_session_id: sessionResponse.data.id,
+      locus_webhook_secret: sessionResponse.data.webhookSecret,
+      locus_checkout_url: sessionResponse.data.checkoutUrl
+    });
 
     return NextResponse.json({
       success: true,
       data: {
-        bounty: newBounty,
+        bounty: { ...newBounty, locus_checkout_url: sessionResponse.data.checkoutUrl },
         locus: {
           sessionId: sessionResponse.data.id,
           checkoutUrl: sessionResponse.data.checkoutUrl
         }
       }
     });
+
   } catch (error: any) {
-    console.error('Error creating bounty:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'Internal Server Error',
-        details: error
-      },
-      { status: 500 }
-    );
+    console.error('[BOUNTY-API-ERROR] Handled Exception');
+    console.error(error);
+    return NextResponse.json({ 
+      error: error.name || 'API_ERROR', 
+      message: error.message,
+      detail: error.toString() 
+    }, { status: 500 });
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const identity = await getRequestIdentity(request);
+    if (!identity) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const bounties = await db.getBounties();
-    return NextResponse.json({
-      success: true,
-      data: bounties
-    });
-  } catch (error) {
-    console.error('Error fetching bounties:', error);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: true, data: bounties });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

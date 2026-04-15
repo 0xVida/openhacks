@@ -40,6 +40,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // 1. Initial Identity Population & UUID Mapping
       if (user) {
+        // ALWAYS convert the raw GitHub ID to our deterministic Supabase UUID
         token.id = uuidv5(user.id.toString(), GITHUB_NAMESPACE);
         token.login = user.login || user.name;
         token.name = user.name;
@@ -73,64 +74,71 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               token.email = emails.find((e: any) => e.verified)?.email || emails[0]?.email || token.email;
               log(`[AUTH] WARNING: Using fallback email: ${token.email}`);
             }
-          } else {
-            log(`[AUTH] ERROR: GitHub Email API returned status ${emailRes.status}`);
           }
         } catch (e: any) {
-          log(`[AUTH] CRITICAL EMAIL ERROR: ${e.message}`);
+          log(`[AUTH] Email fetch error: ${e.message}`);
         }
 
-        // 3. Database Synchronization
+        // 3. Database Synchronization & Self-Healing
         if (token.id && token.email) {
           try {
             const username = token.login;
             const supabaseId = token.id;
-            log(`[AUTH] DB Syncing ID: ${supabaseId}`);
 
-            const { data: existing, error: checkError } = await supabaseAdmin
-              .from('profiles')
-              .select('id')
-              .eq('id', supabaseId)
-              .maybeSingle();
+            // Check if this specific ID already exists
+            const { data: existingById } = await supabaseAdmin.from('profiles').select('id').eq('id', supabaseId).maybeSingle();
             
-            if (checkError) {
-              log(`[AUTH] DB CHECK ERROR: ${checkError.message}`);
-            }
-
-            if (existing) {
-              const { error: updateError } = await supabaseAdmin.from('profiles').update({ 
+            if (existingById) {
+              log(`[AUTH] Identity match found. Updating profile data.`);
+              await supabaseAdmin.from('profiles').update({ 
                 email: token.email, 
                 avatar_url: token.picture,
                 full_name: token.name,
                 updated_at: new Date().toISOString() 
               }).eq('id', supabaseId);
-              
-              if (updateError) {
-                log(`[AUTH] DB UPDATE ERROR: ${updateError.message}`);
-              } else {
-                log(`[AUTH] SUCCESS: Profile updated in DB`);
-              }
+              log(`[AUTH] SUCCESS: Profile updated`);
             } else {
-              const { error: insertError } = await supabaseAdmin.from('profiles').insert({
-                id: supabaseId,
-                username,
-                email: token.email,
-                avatar_url: token.picture,
-                full_name: token.name,
-                role: 'maintainer' // Forcing maintainer role for this test to ensure access
-              });
+              // Check if the USERNAME exists under a DIFFERENT ID (Identity Conflict)
+              const { data: existingByName } = await supabaseAdmin.from('profiles').select('id').eq('username', username).maybeSingle();
 
-              if (insertError) {
-                log(`[AUTH] DB INSERT ERROR: ${insertError.message} (${insertError.details})`);
+              if (existingByName) {
+                log(`[AUTH] HEALING IN PROGRESS: Migrating username ${username} from ${existingByName.id} -> ${supabaseId}`);
+                
+                // 1. Delete the "Zombie" profile
+                const { error: delError } = await supabaseAdmin.from('profiles').delete().eq('id', existingByName.id);
+                if (delError) log(`[AUTH] HEAL ERROR (Delete): ${delError.message}`);
+
+                // 2. Insert the fresh profile with the correct deterministic UUID
+                const { error: insError } = await supabaseAdmin.from('profiles').insert({
+                  id: supabaseId,
+                  username,
+                  email: token.email,
+                  avatar_url: token.picture,
+                  full_name: token.name,
+                  role: 'maintainer'
+                });
+                if (insError) log(`[AUTH] HEAL ERROR (Insert): ${insError.message}`);
+                else log(`[AUTH] SUCCESS: Profile HEALED and Re-synchronized`);
               } else {
-                log(`[AUTH] SUCCESS: Profile created in DB`);
+                // Brand new user
+                const { error } = await supabaseAdmin.from('profiles').insert({
+                  id: supabaseId,
+                  username,
+                  email: token.email,
+                  avatar_url: token.picture,
+                  full_name: token.name,
+                  role: 'maintainer'
+                });
+                if (error) {
+                  log(`[AUTH] INSERT ERROR: ${error.message}`);
+                } else {
+                  log(`[AUTH] SUCCESS: New profile created`);
+                }
               }
             }
           } catch (err: any) {
-            log(`[AUTH] CRITICAL DB SYNC ERROR: ${err.message}`);
+            log(`[AUTH] DB sync critical error: ${err.message}`);
           }
-        } else {
-          log(`[AUTH] SKIP SYNC: ID(${!!token.id}) or Email(${!!token.email}) missing`);
         }
       }
       
