@@ -3,7 +3,6 @@ import GitHub from "next-auth/providers/github";
 import { supabaseAdmin } from "@/lib/supabase";
 import { v5 as uuidv5 } from 'uuid';
 
-// Deterministic namespace for GitHub IDs -> UUIDs
 const GITHUB_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -38,9 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         debugLogs.push(timestamped);
       };
 
-      // 1. Initial Identity Population & UUID Mapping
       if (user) {
-        // ALWAYS convert the raw GitHub ID to our deterministic Supabase UUID
         token.id = uuidv5(user.id.toString(), GITHUB_NAMESPACE);
         token.login = user.login || user.name;
         token.name = user.name;
@@ -79,22 +76,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           log(`[AUTH] Email fetch error: ${e.message}`);
         }
 
-        // 3. Database Synchronization & Self-Healing
         if (token.id && token.email) {
           try {
             const username = token.login;
             const supabaseId = token.id;
 
-            // Check if this specific ID already exists
             const { data: existingById } = await supabaseAdmin.from('profiles').select('id').eq('id', supabaseId).maybeSingle();
-            
+
             if (existingById) {
               log(`[AUTH] Identity match found. Updating profile data.`);
-              await supabaseAdmin.from('profiles').update({ 
-                email: token.email, 
+              await supabaseAdmin.from('profiles').update({
+                email: token.email,
                 avatar_url: token.picture,
                 full_name: token.name,
-                updated_at: new Date().toISOString() 
+                updated_at: new Date().toISOString()
               }).eq('id', supabaseId);
               log(`[AUTH] SUCCESS: Profile updated`);
             } else {
@@ -102,25 +97,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               const { data: existingByName } = await supabaseAdmin.from('profiles').select('id').eq('username', username).maybeSingle();
 
               if (existingByName) {
-                log(`[AUTH] HEALING IN PROGRESS: Migrating username ${username} from ${existingByName.id} -> ${supabaseId}`);
-                
-                // 1. Delete the "Zombie" profile
-                const { error: delError } = await supabaseAdmin.from('profiles').delete().eq('id', existingByName.id);
-                if (delError) log(`[AUTH] HEAL ERROR (Delete): ${delError.message}`);
+                log(`[AUTH] ATOMIC MIGRATION: Moving username ${username} from ${existingByName.id} -> ${supabaseId}`);
 
-                // 2. Insert the fresh profile with the correct deterministic UUID
-                const { error: insError } = await supabaseAdmin.from('profiles').insert({
-                  id: supabaseId,
-                  username,
-                  email: token.email,
-                  avatar_url: token.picture,
-                  full_name: token.name,
-                  role: 'maintainer'
-                });
-                if (insError) log(`[AUTH] HEAL ERROR (Insert): ${insError.message}`);
-                else log(`[AUTH] SUCCESS: Profile HEALED and Re-synchronized`);
+                const { error: migrationError } = await supabaseAdmin
+                  .from('profiles')
+                  .update({ id: supabaseId })
+                  .eq('id', existingByName.id);
+
+                if (migrationError) {
+                  log(`[AUTH] MIGRATION FAILED: ${migrationError.message}. Check if ON UPDATE CASCADE is enabled.`);
+                } else {
+                  log(`[AUTH] SUCCESS: Identity migrated. Now syncing latest metadata.`);
+                  await supabaseAdmin.from('profiles').update({
+                    email: token.email,
+                    avatar_url: token.picture,
+                    full_name: token.name,
+                    updated_at: new Date().toISOString()
+                  }).eq('id', supabaseId);
+                  log(`[AUTH] SUCCESS: Profile fully re-synchronized`);
+                }
               } else {
-                // Brand new user
                 const { error } = await supabaseAdmin.from('profiles').insert({
                   id: supabaseId,
                   username,
@@ -141,7 +137,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
       }
-      
+
       if (debugLogs.length > 0) {
         token.debugLogs = debugLogs;
       }
@@ -155,7 +151,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.debugLogs) {
         (session as any).debugLogs = token.debugLogs;
       }
-      
+
       if (session.user) {
         (session.user as any).login = token.login;
         (session.user as any).id = token.id;
