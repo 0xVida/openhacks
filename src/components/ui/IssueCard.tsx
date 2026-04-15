@@ -29,9 +29,20 @@ export default function IssueCard({ issue, active }: IssueCardProps) {
     <div className={`p-4 transition-all cursor-pointer group ${active ? 'bg-surface-high ring-1 ring-accent/20' : 'hover:bg-surface-mid'} border-sleek`}>
         <div className="flex flex-wrap gap-2">
           {issue.status === 'pending' ? (
-            <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-black font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20">
-               PENDING FUNDING
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-black font-black uppercase tracking-widest flex items-center gap-1 shadow-lg shadow-amber-500/20">
+                 PENDING FUNDING
+              </span>
+              <a 
+                href={issue.locus_checkout_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-[10px] px-2 py-0.5 rounded bg-accent text-white font-black uppercase tracking-widest hover:bg-accent-hover transition-colors no-underline"
+              >
+                FUND NOW
+              </a>
+            </div>
           ) : (
             <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider ${issue.status === 'closed' ? 'bg-muted-foreground/10 text-muted-foreground' : 'bg-accent/10 text-accent'} border border-current opacity-70`}>
               {issue.status}

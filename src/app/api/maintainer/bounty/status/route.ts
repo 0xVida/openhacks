@@ -32,15 +32,16 @@ export async function GET(request: Request) {
       });
     }
 
-    const locusStatus = locusRes.data.status; // 'paid', 'pending', etc.
+    const locusStatus = locusRes.data.status; // 'PAID', 'PENDING', etc.
+    const isActuallyPaid = locusStatus?.toLowerCase() === 'paid';
 
     // 2. If PAID, sync to our DB instantly
-    if (locusStatus === 'paid') {
+    if (isActuallyPaid) {
       const bounty = await db.getBounty(bountyId);
       
       // Only update if not already funded to avoid race conditions/redundant work
       if (bounty && bounty.funding_status !== 'funded') {
-        console.log(`Auto-Sync: Locus reports session ${sessionId} is PAID. Activating bounty ${bountyId}.`);
+        console.log(`Auto-Sync: Locus reports session ${sessionId} is PAID (case-insensitive). Activating bounty ${bountyId}.`);
         await db.updateBounty(bountyId, {
           funding_status: 'funded',
           status: 'open',
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       status: locusStatus,
-      isFunded: locusStatus === 'paid'
+      isFunded: isActuallyPaid
     });
 
   } catch (error: any) {

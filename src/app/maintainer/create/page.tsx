@@ -61,6 +61,8 @@ export default function CreateBountyPage() {
   // Predefined Skill Options
   const AVAILABLE_SKILLS = ['Rust', 'Next.js', 'Solidity', 'AI', 'Security', 'DevOps'];
 
+  const isValidAmount = reward && !isNaN(parseFloat(reward)) && parseFloat(reward) > 0;
+
   // Fetch Repos on mount
   React.useEffect(() => {
     async function fetchRepos() {
@@ -384,9 +386,9 @@ export default function CreateBountyPage() {
 
             <div className="pt-12 border-t border-border-subtle flex flex-col sm:flex-row gap-4">
               <button
-                disabled={isLoading}
+                disabled={isLoading || !isValidAmount}
                 onClick={handleLaunchBounty}
-                className={`flex-[2] py-5 bg-accent hover:bg-accent-hover text-white rounded-3xl font-black transition-all shadow-2xl shadow-accent/30 tracking-tight flex items-center justify-center gap-3 active:scale-[0.98] ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`flex-[2] py-5 bg-accent hover:bg-accent-hover text-white rounded-3xl font-black transition-all shadow-2xl shadow-accent/30 tracking-tight flex items-center justify-center gap-3 active:scale-[0.98] ${(isLoading || !isValidAmount) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
               >
                 {isLoading ? (
                   <Loader2 size={22} className="animate-spin" />
