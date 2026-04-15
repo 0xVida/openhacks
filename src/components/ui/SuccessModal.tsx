@@ -25,11 +25,27 @@ export default function SuccessModal({
   isError = false,
   hideSecondaryAction = false
 }: SuccessModalProps) {
-  if (!isOpen) return null;
-
-  const accentColor = isError ? "red-500" : "accent";
-
   const [hasClickedCheckout, setHasClickedCheckout] = React.useState(false);
+  const [confetti, setConfetti] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (isOpen && !isError) {
+      const colors = ['#6366f1', '#818cf8', '#a78bfa', '#f472b6', '#fbbf24'];
+      const particles = Array.from({ length: 40 }).map((_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        delay: `${Math.random() * 2}s`,
+        duration: `${2 + Math.random() * 2}s`,
+        size: `${Math.random() * 8 + 4}px`
+      }));
+      setConfetti(particles);
+      
+      // Clear after 4s
+      const timer = setTimeout(() => setConfetti([]), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isError]);
 
   const handleCheckoutClick = () => {
     setHasClickedCheckout(true);
@@ -38,6 +54,8 @@ export default function SuccessModal({
   const handleVerify = () => {
     window.location.reload();
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
