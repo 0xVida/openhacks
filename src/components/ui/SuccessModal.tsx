@@ -61,6 +61,8 @@ export default function SuccessModal({
         try {
           const res = await fetch(`/api/maintainer/bounty/status?sessionId=${sessionId}&bountyId=${bountyId}`);
           const data = await res.json();
+          console.log('[POLL DEBUG] Bounty Status:', data);
+          
           if (data.success && data.isFunded) {
              // SUCCESS! The proxy already updated the DB.
              setIsVerifying(false);
@@ -87,9 +89,12 @@ export default function SuccessModal({
     setIsVerifying(true);
     setVerificationError(null);
     
+    console.log('[MANUAL VERIFY] Checking session:', sessionId);
+
     try {
       const res = await fetch(`/api/maintainer/bounty/status?sessionId=${sessionId}&bountyId=${bountyId}`);
       const data = await res.json();
+      console.log('[MANUAL VERIFY] Result:', data);
       
       if (data.success && data.isFunded) {
         window.location.href = '/?payment_success=true';
@@ -98,6 +103,7 @@ export default function SuccessModal({
         setIsVerifying(false);
       }
     } catch (e) {
+      console.error('[MANUAL VERIFY] Error:', e);
       setVerificationError("Technical error during verification. Please try again.");
       setIsVerifying(false);
     }

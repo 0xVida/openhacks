@@ -21,6 +21,9 @@ export async function GET(request: Request) {
     // 1. Fetch real status from Locus
     const locusRes = await getCheckoutSessionStatus(sessionId);
 
+    console.log(`[DEBUG] Locus Status Check for Session: ${sessionId}`);
+    console.dir(locusRes, { depth: null });
+
     if (!locusRes.success || !locusRes.data) {
       return NextResponse.json({ 
         success: false, 
