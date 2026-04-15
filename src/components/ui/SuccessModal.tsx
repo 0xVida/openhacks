@@ -29,26 +29,15 @@ export default function SuccessModal({
 
   const accentColor = isError ? "red-500" : "accent";
 
-  const [confetti, setConfetti] = React.useState<any[]>([]);
+  const [hasClickedCheckout, setHasClickedCheckout] = React.useState(false);
 
-  React.useEffect(() => {
-    if (isOpen && !isError) {
-      const colors = ['#6366f1', '#818cf8', '#a78bfa', '#f472b6', '#fbbf24'];
-      const particles = Array.from({ length: 40 }).map((_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        delay: `${Math.random() * 2}s`,
-        duration: `${2 + Math.random() * 2}s`,
-        size: `${Math.random() * 8 + 4}px`
-      }));
-      setConfetti(particles);
-      
-      // Clear after 4s
-      const timer = setTimeout(() => setConfetti([]), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, isError]);
+  const handleCheckoutClick = () => {
+    setHasClickedCheckout(true);
+  };
+
+  const handleVerify = () => {
+    window.location.reload();
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
@@ -94,21 +83,37 @@ export default function SuccessModal({
             <div className={`absolute -inset-4 ${isError ? 'bg-red-500/20' : 'bg-accent/20'} rounded-full blur-2xl animate-pulse`} />
           </div>
 
-          <h3 className="text-4xl font-black text-foreground uppercase tracking-tight mb-4 italic">{title}</h3>
+          <h3 className="text-4xl font-black text-foreground uppercase tracking-tight mb-4 italic">{hasClickedCheckout ? 'Awaiting Payment' : title}</h3>
           <p className="text-muted-foreground font-medium mb-12 leading-relaxed text-lg">
-            {message}
+            {hasClickedCheckout 
+              ? 'Please finish the escrow payment in the new tab. Once done, click the refresh button below.' 
+              : message}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             {!isError ? (
               <>
-                <Link
-                  href={actionHref}
-                  className="flex-1 py-5 bg-accent hover:bg-accent-hover text-white rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group shadow-2xl shadow-accent/40 active:scale-95"
-                >
-                  <Zap size={16} fill="currentColor" />
-                  {actionText}
-                </Link>
+                {!hasClickedCheckout ? (
+                  <a
+                    href={actionHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleCheckoutClick}
+                    className="flex-1 py-5 bg-accent hover:bg-accent-hover text-white rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 group shadow-2xl shadow-accent/40 active:scale-95 no-underline"
+                  >
+                    <Zap size={16} fill="currentColor" />
+                    {actionText}
+                  </a>
+                ) : (
+                  <button
+                    onClick={handleVerify}
+                    className="flex-1 py-5 bg-surface-high border-2 border-accent text-accent rounded-[1.5rem] font-black text-[13px] uppercase tracking-widest hover:bg-accent hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <CheckCircle2 size={16} />
+                    I've Paid, Refresh Dashboard
+                  </button>
+                )}
+                
                 {!hideSecondaryAction && (
                   <button
                     onClick={onClose}

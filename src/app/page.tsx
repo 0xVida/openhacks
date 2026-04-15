@@ -126,15 +126,13 @@ function HomeContent() {
           }));
 
           const filtered = transformed.filter((b: any) => {
-            // Include pending only if it matches current maintainer
-            if (b.status === 'pending') {
-              return githubUser?.id && b.maintainer_id === githubUser.id;
+            // UNIFIED FILTER FOR MAINTAINERS: If I created it, I see it. (Open OR Pending)
+            if (role === 'maintainer') {
+              return (githubUser?.id && b.maintainer_id === githubUser.id) || registeredRepos.includes(b.repoFullName);
             }
 
-            const matchesRole = role === 'maintainer' 
-              ? (registeredRepos.includes(b.repoFullName) || (githubUser?.id && b.maintainer_id === githubUser.id))
-              : true;
-            
+            // FILTER FOR CONTRIBUTORS: See everything that is active ('open')
+            const matchesRole = b.status === 'open';
             const matchesTag = selectedTag ? b.labels.includes(selectedTag) : true;
             
             return matchesRole && matchesTag;
@@ -181,7 +179,7 @@ function HomeContent() {
         <div className="p-6 border-b border-border-subtle bg-surface-low sticky top-0 z-10">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-black text-foreground uppercase tracking-tight">
-              {role === 'contributor' ? 'Open Issues' : 'Active Bounties'}
+              {role === 'maintainer' ? 'Your Bounties' : 'Open Bounties'}
             </h2>
             <div className="flex gap-2 text-muted-foreground">
               <button className="bg-surface-high p-2 rounded-xl hover:bg-accent/10 hover:text-accent transition-all">
