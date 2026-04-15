@@ -27,6 +27,7 @@ export interface Bounty {
   locus_webhook_secret?: string;
   funded_at?: string;
   created_at?: string;
+  tags?: string[];
 }
 
 export const db = {

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const { user } = identity;
 
-    let { title, description, repo, issueNumber, reward } = await request.json();
+    let { title, description, repo, issueNumber, reward, tags } = await request.json();
 
     if (!repo || !issueNumber || !reward) {
       return NextResponse.json(
@@ -79,7 +79,8 @@ export async function POST(request: Request) {
       maintainer_id: user.id,
       funding_status: 'unfunded',
       locus_session_id: sessionResponse.data.id,
-      locus_webhook_secret: sessionResponse.data.webhookSecret
+      locus_webhook_secret: sessionResponse.data.webhookSecret,
+      tags: tags || []
     });
 
     if (!newBounty) throw new Error('Failed to create bounty record');

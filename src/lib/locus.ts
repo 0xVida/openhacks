@@ -153,8 +153,7 @@ export async function createCheckoutSession(params: {
       data: {
         id: data.data.id || data.data.session_id,
         checkoutUrl: data.data.checkoutUrl || data.data.checkout_url,
-        webhookSecret: data.data.webhookSecret || data.data.webhook_secret || data.data.secret || data.data.signing_secret,
-        _raw_keys: Object.keys(data.data || {}) 
+        webhookSecret: data.data.webhookSecret || data.data.webhook_secret || data.data.secret || data.data.signing_secret
       }
     };
   } catch (error: any) {

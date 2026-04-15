@@ -14,6 +14,7 @@ export default function Home() {
   const [bounties, setBounties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [mounted, setMounted] = useState(false);
   
@@ -92,15 +93,18 @@ export default function Home() {
             reward: b.reward_amount,
             status: b.status,
             maintainer_id: b.maintainer_id,
-            labels: ['GitHub Issue']
+            labels: b.tags && b.tags.length > 0 ? b.tags : ['GitHub Issue']
           }));
 
-          const filtered = role === 'maintainer' 
-            ? transformed.filter((b: any) => 
-                registeredRepos.includes(b.repoFullName) || 
-                (githubUser?.id && b.maintainer_id === githubUser.id)
-              )
-            : transformed;
+          const filtered = transformed.filter((b: any) => {
+            const matchesRole = role === 'maintainer' 
+              ? (registeredRepos.includes(b.repoFullName) || (githubUser?.id && b.maintainer_id === githubUser.id))
+              : true;
+            
+            const matchesTag = selectedTag ? b.labels.includes(selectedTag) : true;
+            
+            return matchesRole && matchesTag;
+          });
 
           setBounties(filtered);
           if (filtered.length > 0) {
@@ -161,6 +165,37 @@ export default function Home() {
                <span className="text-xs font-black uppercase tracking-widest">Post New Bounty</span>
             </Link>
           )}
+
+          {/* Tag Filter */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Skill Tags</span>
+              {selectedTag && (
+                <button 
+                  onClick={() => setSelectedTag(null)}
+                  className="text-[9px] font-black uppercase text-accent hover:underline decoration-2 underline-offset-2"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['Rust', 'Next.js', 'Solidity', 'AI', 'Security', 'DevOps'].map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  className={`
+                    px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border
+                    ${selectedTag === tag 
+                      ? 'bg-accent text-white border-accent shadow-md shadow-accent/10' 
+                      : 'bg-surface-high text-muted-foreground border-border-subtle hover:border-accent/30'}
+                  `}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 lg:p-4 space-y-3">

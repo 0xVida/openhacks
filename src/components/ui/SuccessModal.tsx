@@ -27,8 +27,45 @@ export default function SuccessModal({
 
   const accentColor = isError ? "red-500" : "accent";
 
+  const [confetti, setConfetti] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    if (isOpen && !isError) {
+      const colors = ['#6366f1', '#818cf8', '#a78bfa', '#f472b6', '#fbbf24'];
+      const particles = Array.from({ length: 40 }).map((_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        delay: `${Math.random() * 2}s`,
+        duration: `${2 + Math.random() * 2}s`,
+        size: `${Math.random() * 8 + 4}px`
+      }));
+      setConfetti(particles);
+      
+      // Clear after 4s
+      const timer = setTimeout(() => setConfetti([]), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isError]);
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* Confetti */}
+      {confetti.map(p => (
+        <div 
+          key={p.id}
+          className="confetti"
+          style={{ 
+            left: p.left, 
+            backgroundColor: p.color, 
+            animationDelay: p.delay,
+            animationDuration: p.duration,
+            width: p.size,
+            height: p.size,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px'
+          }}
+        />
+      ))}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}

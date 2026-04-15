@@ -41,6 +41,19 @@ export default function IssueCard({ issue, active }: IssueCardProps) {
         <span className="text-muted-foreground mr-1 font-mono tracking-tighter">#{issue.issueNumber}</span>
         {issue.title}
       </h3>
+
+      {issue.labels && issue.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {issue.labels.map(label => (
+            <span 
+              key={label}
+              className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-surface-high border border-border-subtle text-muted-foreground/70"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
       
       <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border-subtle/50">
         <div className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center overflow-hidden border border-accent/20 shrink-0">
