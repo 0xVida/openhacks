@@ -22,21 +22,20 @@ async function simulateMaintainer() {
     const OPENHACKS_API_KEY = process.env.OPENHACKS_API_KEY;
     const LOCUS_API_KEY = process.env.LOCUS_API_KEY;
     const REPO = process.env.REPO || '0xVida/openhacks';
-    
-    // Prioritize Production URL from Env
-    const API_BASE = process.env.AUTH_URL || 
-                    process.env.NEXTAUTH_URL || 
-                    process.env.NEXT_PUBLIC_URL || 
-                    'http://localhost:3001';
+
+    const API_BASE = process.env.AUTH_URL ||
+        process.env.NEXTAUTH_URL ||
+        process.env.NEXT_PUBLIC_URL ||
+        'http://localhost:3001';
 
     const LOCUS_API_BASE = 'https://beta-api.paywithlocus.com/api';
 
-    console.log(`\n--- Pure Simulation Context ---`);
+    console.log(`\n--- Maintainer agent workflow (no mocks) ---`);
     console.log(`API_BASE: ${API_BASE}`);
     console.log(`REPO:     ${REPO}`);
     console.log(`OPENHACKS_KEY: ${OPENHACKS_API_KEY ? 'Present' : 'MISSING'}`);
     console.log(`LOCUS_KEY:     ${LOCUS_API_KEY ? 'Present' : 'MISSING'}`);
-    console.log(`--------------------------\n`);
+    console.log(`\n`);
 
     if (!OPENHACKS_API_KEY || !LOCUS_API_KEY) {
         console.error('Error: Missing OPENHACKS_API_KEY or LOCUS_API_KEY in .env.local');
@@ -50,7 +49,7 @@ async function simulateMaintainer() {
 
     console.log(`\nPhase 2: Creating GitHub Issue in ${REPO}...`);
     const issueTitle = `Agentic Task: ${new Date().getTime()}`;
-    const issueBody = "This is an automated task created by the Maintainer Simulation agent. Priority: High.";
+    const issueBody = "This is an automated task created by the Maintainer agent. Priority: High.";
 
     let issueNumber: number;
     try {
@@ -112,17 +111,19 @@ async function simulateMaintainer() {
 
     console.log(`Payment Submitted to Locus. Transaction ID: ${payData.data?.transaction_id || 'Success'}`);
 
-    console.log('\nPhase 5: Native Callback (Simulating Redirect to App)...');
-    // Instead of faking a webhook, we hit the real internal verification endpoint
-    // that the browser would hit when redirected back from Locus.
-    const verifyResponse = await fetch(`${API_BASE}/api/locus/verify?bountyId=${bountyId}&sim=true`, {
-        method: 'GET'
+    console.log('\nPhase 5: Checking bounty status');
+    // We hit the production verification endpoint with the proper Accept header
+    const verifyResponse = await fetch(`${API_BASE}/api/locus/verify?bountyId=${bountyId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        }
     });
 
     if (verifyResponse.ok) {
-        console.log('Verification Callback: SUCCESS (App state updated naturally)');
+        console.log('was sucessfully funded and status updated');
     } else {
-        console.error('Verification Callback: FAILED', await verifyResponse.text());
+        console.error('funding failed', await verifyResponse.text());
         process.exit(1);
     }
 
@@ -132,9 +133,9 @@ async function simulateMaintainer() {
     const found = discoveryData.data.find((b: any) => b.id === bountyId);
 
     if (found && found.status === 'open') {
-        console.log('\n🎉 SUCCESS: Bounty is fully PROVISIONED and OPEN on the platform.');
+        console.log('\nSUCCESS: Bounty is fully PROVISIONED and OPEN on the platform.');
     } else {
-        console.log('\n❌ FAILURE: Bounty status did not update as expected.');
+        console.log('\nFAILURE: Bounty status did not update as expected');
         console.log('Current Bounty Data:', found);
         process.exit(1);
     }
