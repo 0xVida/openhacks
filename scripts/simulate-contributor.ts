@@ -18,7 +18,7 @@ if (fs.existsSync(envPath)) {
  */
 
 async function simulateContributor() {
-    const API_BASE = process.env.NEXT_PUBLIC_URL || 'http://localhost:3001';
+    const API_BASE = process.env.NEXT_PUBLIC_URL || 'https://openhacks-pro.vercel.app';
     const TEST_DIR = path.join(process.cwd(), 'temp_simulation');
 
     console.log(`\n--- Simulation Context ---`);
@@ -55,7 +55,7 @@ async function simulateContributor() {
     console.log('\nPhase 3: Simulating a Fix...');
     const branchName = `fix-issue-${bounty.issue_number}-${new Date().getTime()}`;
     execSync(`git checkout -b ${branchName}`);
-    
+
     const fixFilePath = path.join(TEST_DIR, 'CONTRIBUTOR_FIX.md');
     fs.writeFileSync(fixFilePath, `# Fix for Issue #${bounty.issue_number}\n\nResolved the problem defined in the issue.`);
 
@@ -70,7 +70,7 @@ async function simulateContributor() {
         console.log('Creating PR on GitHub...');
         const prBody = `This is an automated fix for #${bounty.issue_number}.\n\nFixes #${bounty.issue_number} (OpenHacks Auto Payout Test)`;
         const prOutput = execSync(`gh pr create --title "Fix for #${bounty.issue_number}" --body "${prBody}" --head ${branchName}`, { encoding: 'utf8' });
-        
+
         console.log(`\nSUCCESS: PR Created!`);
         console.log(`URL: ${prOutput.trim()}`);
         console.log(`\nNext Step: Go to the URL above and MERGE the PR to trigger the automated ${bounty.reward_amount} USDC payout.`);
