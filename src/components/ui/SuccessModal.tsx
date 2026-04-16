@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Zap, ArrowRight, Plus, ExternalLink, X, AlertCircle, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { CheckCircle2, Zap, Plus, X, AlertCircle, Loader2 } from 'lucide-react';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -46,7 +45,7 @@ export default function SuccessModal({
         size: `${Math.random() * 8 + 4}px`
       }));
       setConfetti(particles);
-      
+
       const timer = setTimeout(() => setConfetti([]), 4000);
       return () => clearTimeout(timer);
     }
@@ -55,18 +54,16 @@ export default function SuccessModal({
   // Polling logic
   React.useEffect(() => {
     let intervalId: any;
-    
+
     if (isOpen && hasClickedCheckout && sessionId && bountyId) {
       intervalId = setInterval(async () => {
         try {
           const res = await fetch(`/api/maintainer/bounty/status?sessionId=${sessionId}&bountyId=${bountyId}`);
           const data = await res.json();
-          console.log('[POLL DEBUG] Bounty Status:', data);
-          
           if (data.success && data.isFunded) {
-             // SUCCESS! The proxy already updated the DB.
-             setIsVerifying(false);
-             window.location.href = '/?payment_success=true';
+            // SUCCESS! The proxy already updated the DB.
+            setIsVerifying(false);
+            window.location.href = '/?payment_success=true';
           }
         } catch (e) {
           console.error('Polling error:', e);
@@ -85,17 +82,14 @@ export default function SuccessModal({
 
   const handleVerifyManually = async () => {
     if (!sessionId || !bountyId) return;
-    
+
     setIsVerifying(true);
     setVerificationError(null);
-    
-    console.log('[MANUAL VERIFY] Checking session:', sessionId);
 
     try {
       const res = await fetch(`/api/maintainer/bounty/status?sessionId=${sessionId}&bountyId=${bountyId}`);
       const data = await res.json();
-      console.log('[MANUAL VERIFY] Result:', data);
-      
+
       if (data.success && data.isFunded) {
         window.location.href = '/?payment_success=true';
       } else {
@@ -103,7 +97,6 @@ export default function SuccessModal({
         setIsVerifying(false);
       }
     } catch (e) {
-      console.error('[MANUAL VERIFY] Error:', e);
       setVerificationError("Technical error during verification. Please try again.");
       setIsVerifying(false);
     }
@@ -115,12 +108,12 @@ export default function SuccessModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
       {/* Confetti */}
       {confetti.map(p => (
-        <div 
+        <div
           key={p.id}
           className="confetti"
-          style={{ 
-            left: p.left, 
-            backgroundColor: p.color, 
+          style={{
+            left: p.left,
+            backgroundColor: p.color,
             animationDelay: p.delay,
             animationDuration: p.duration,
             width: p.size,
@@ -159,8 +152,8 @@ export default function SuccessModal({
             {hasClickedCheckout ? 'Awaiting Payment' : title}
           </h3>
           <p className="text-muted-foreground font-medium mb-12 leading-relaxed text-lg">
-            {hasClickedCheckout 
-              ? 'Finish the payment in the new tab. This window will automatically update once it detects the payment confirmation.' 
+            {hasClickedCheckout
+              ? 'Finish the payment in the new tab. This window will automatically update once it detects the payment confirmation.'
               : message}
           </p>
 
@@ -199,7 +192,7 @@ export default function SuccessModal({
                     {isVerifying ? 'Verifying...' : 'Verify Status'}
                   </button>
                 )}
-                
+
                 {!hideSecondaryAction && (
                   <button
                     onClick={onClose}

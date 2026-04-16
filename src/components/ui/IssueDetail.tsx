@@ -20,9 +20,10 @@ import { Issue } from './IssueCard';
 
 interface IssueDetailProps {
   issue: Issue;
+  onFundNow?: () => void;
 }
 
-export default function IssueDetail({ issue }: IssueDetailProps) {
+export default function IssueDetail({ issue, onFundNow }: IssueDetailProps) {
   const { role } = useRole();
   return (
     <div className="flex-1 flex flex-col md:flex-row h-full bg-surface-low border-l border-border-subtle overflow-hidden relative">
@@ -167,15 +168,13 @@ export default function IssueDetail({ issue }: IssueDetailProps) {
                   This bounty is initialized but not yet funded. Complete the escrow payment to make it active for contributors.
                </p>
             </div>
-            <a 
-              href={issue.locus_checkout_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-5 bg-accent text-white hover:bg-accent-hover rounded-2xl font-black transition-all shadow-xl shadow-accent/20 tracking-tight flex items-center justify-center gap-3 group active:scale-95 text-center no-underline"
+            <button 
+              onClick={onFundNow}
+              className="w-full py-5 bg-accent text-white hover:bg-accent-hover rounded-2xl font-black transition-all shadow-xl shadow-accent/20 tracking-tight flex items-center justify-center gap-3 group active:scale-95 text-center border-none cursor-pointer"
             >
                <Zap size={18} className="fill-current" />
                COMPLETE ESCROW
-            </a>
+            </button>
           </div>
         )}
       </div>

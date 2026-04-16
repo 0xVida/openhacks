@@ -27,6 +27,17 @@ function HomeContent() {
   const [sidebarWidth, setSidebarWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
 
+  // Funding & Modal State
+  const [showFundingModal, setShowFundingModal] = useState(false);
+  const [fundingData, setFundingData] = useState<{
+    title: string;
+    message: string;
+    checkoutUrl?: string;
+    sessionId?: string;
+    bountyId?: string;
+  }>({ title: '', message: '' });
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -154,6 +165,40 @@ function HomeContent() {
     fetchBounties();
   }, [role, registeredRepos, githubUser]);
 
+  const handleFundNow = async (issue: any) => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
+      const response = await fetch('/api/maintainer/bounty/fund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bountyId: issue.id }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        setFundingData({
+          title: result.data.title,
+          message: result.data.message,
+          checkoutUrl: result.data.checkoutUrl,
+          sessionId: result.data.sessionId,
+          bountyId: result.data.bountyId
+        });
+        setShowFundingModal(true);
+        // Open Locus in new tab
+        window.open(result.data.checkoutUrl, '_blank');
+      } else {
+        alert(result.error || "Failed to refresh funding session.");
+      }
+    } catch (e) {
+      console.error('Refresh funding error:', e);
+      alert("Technical error while preparing checkout.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const handleSelectIssue = (issue: any) => {
     setSelectedIssue(issue);
     setShowMobileDetail(true);
@@ -253,7 +298,11 @@ function HomeContent() {
             </div>
           ) : bounties.map((issue) => (
             <div key={issue.id} onClick={() => handleSelectIssue(issue)}>
-              <IssueCard issue={issue} active={selectedIssue?.id === issue.id} />
+              <IssueCard 
+                issue={issue} 
+                active={selectedIssue?.id === issue.id} 
+                onFundNow={() => handleFundNow(issue)}
+              />
             </div>
           ))}
 
@@ -312,7 +361,10 @@ function HomeContent() {
         
         <div className="flex-1 flex flex-col overflow-hidden">
            {selectedIssue ? (
-             <IssueDetail issue={selectedIssue} />
+             <IssueDetail 
+               issue={selectedIssue} 
+               onFundNow={() => handleFundNow(selectedIssue)}
+             />
            ) : (
          <div className="h-full flex flex-col items-center justify-center bg-surface-low opacity-30">
            <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
@@ -332,6 +384,17 @@ function HomeContent() {
         </div>
       </div>
       <OnboardingModal />
+      <SuccessModal 
+        isOpen={showFundingModal}
+        onClose={() => setShowFundingModal(false)}
+        title={fundingData.title}
+        message={fundingData.message}
+        actionHref={fundingData.checkoutUrl}
+        actionText="Proceed to Checkout"
+        sessionId={fundingData.sessionId}
+        bountyId={fundingData.bountyId}
+        hideSecondaryAction={true}
+      />
     </div>
   );
 }
