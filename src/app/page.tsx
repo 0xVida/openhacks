@@ -150,10 +150,9 @@ function HomeContent() {
           });
 
           setBounties(filtered);
-          if (filtered.length > 0) {
+          // Only select the first one if nothing is currently selected
+          if (filtered.length > 0 && !selectedIssue) {
             setSelectedIssue(filtered[0]);
-          } else {
-            setSelectedIssue(null);
           }
         }
       } catch (error) {
@@ -186,8 +185,7 @@ function HomeContent() {
           bountyId: result.data.bountyId
         });
         setShowFundingModal(true);
-        // Open Locus in new tab
-        window.open(result.data.checkoutUrl, '_blank');
+        // We do NOT window.open here. The SuccessModal will handle the click.
       } else {
         alert(result.error || "Failed to refresh funding session.");
       }
