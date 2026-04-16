@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "simulate:maintainer": "tsx scripts/simulate-maintainer.ts",
-    "simulate:contributor": "tsx scripts/simulate-contributor.ts"
+    "simulate:contributor": "tsx scripts/simulate-contributor.ts",
+    "simulate:agent": "tsx scripts/agent-login.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",

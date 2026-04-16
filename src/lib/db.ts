@@ -76,6 +76,51 @@ export const db = {
     if (error) console.error('Error updating reputation:', error);
   },
 
+  async upsertProfile(profile: Partial<Profile>): Promise<Profile | null> {
+    if (!profile.username) return null;
+
+    // First, try to get existing by username
+    const existing = await this.getProfile(profile.username);
+    
+    if (existing) {
+      // Update existing
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          ...profile,
+          // Don't overwrite existing API key if they have one
+          api_key: existing.api_key || profile.api_key || uuidv4()
+        })
+        .eq('username', profile.username)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error updating profile during upsert:', error);
+        return null;
+      }
+      return data;
+    } else {
+      // Create new
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: uuidv4(),
+          reputation: 0,
+          api_key: uuidv4(),
+          ...profile
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error inserting profile during upsert:', error);
+        return null;
+      }
+      return data;
+    }
+  },
+
   // --- Bounties ---
   async getBounties(): Promise<Bounty[]> {
     const { data, error } = await supabaseAdmin
