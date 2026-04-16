@@ -79,11 +79,9 @@ export const db = {
   async upsertProfile(profile: Partial<Profile>): Promise<Profile | null> {
     if (!profile.username) return null;
 
-    // First, try to get existing by username
     const existing = await this.getProfile(profile.username);
-    
+
     if (existing) {
-      // Update existing
       const { data, error } = await supabaseAdmin
         .from('profiles')
         .update({
@@ -94,7 +92,7 @@ export const db = {
         .eq('username', profile.username)
         .select()
         .single();
-      
+
       if (error) {
         console.error('Error updating profile during upsert:', error);
         return null;
@@ -112,7 +110,7 @@ export const db = {
         })
         .select()
         .single();
-      
+
       if (error) {
         console.error('Error inserting profile during upsert:', error);
         return null;
@@ -121,7 +119,6 @@ export const db = {
     }
   },
 
-  // --- Bounties ---
   async getBounties(): Promise<Bounty[]> {
     const { data, error } = await supabaseAdmin
       .from('bounties')

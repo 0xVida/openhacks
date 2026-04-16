@@ -58,9 +58,7 @@ export default function DocsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Custom components for ReactMarkdown
   const components = {
-    // Handle the custom <Note> tag
     note: ({ children }: any) => (
       <div className="my-8 p-6 bg-accent/5 border-l-4 border-accent rounded-r-2xl font-normal text-foreground italic flex items-start gap-4 shadow-sm">
         <div className="mt-1 flex-shrink-0 text-accent">
@@ -133,8 +131,8 @@ export default function DocsPage() {
                 key={doc.id}
                 onClick={() => setActiveDoc(doc)}
                 className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all group ${activeDoc.id === doc.id
-                    ? 'bg-accent text-white shadow-xl shadow-accent/20 ring-1 ring-accent-hover'
-                    : 'bg-surface-high/50 text-muted-foreground hover:text-foreground hover:bg-surface-high border border-border-subtle hover:border-accent/30'
+                  ? 'bg-accent text-white shadow-xl shadow-accent/20 ring-1 ring-accent-hover'
+                  : 'bg-surface-high/50 text-muted-foreground hover:text-foreground hover:bg-surface-high border border-border-subtle hover:border-accent/30'
                   }`}
               >
                 <div className="flex items-center gap-3">

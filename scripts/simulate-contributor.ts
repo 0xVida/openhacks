@@ -21,10 +21,10 @@ async function simulateContributor() {
     const API_BASE = process.env.NEXT_PUBLIC_URL || 'https://openhacks-pro.vercel.app';
     const TEST_DIR = path.join(process.cwd(), 'temp_simulation');
 
-    console.log(`\n--- Simulation Context ---`);
+    console.log(`\n--- Contributor agent workflow (no mocks) ---`);
     console.log(`API_BASE: ${API_BASE}`);
     console.log(`TEST_DIR: ${TEST_DIR}`);
-    console.log(`--------------------------\n`);
+    console.log(`\n`);
     console.log('Phase 1: Discovering funded bounties...');
     const discoveryResponse = await fetch(`${API_BASE}/api/bounties`);
     const discoveryData: any = await discoveryResponse.json();
@@ -52,7 +52,7 @@ async function simulateContributor() {
         execSync(`git clone https://github.com/${bounty.repo_fullname}.git ${TEST_DIR}`, { stdio: 'inherit' });
     }
 
-    console.log('\nPhase 3: Simulating a Fix...');
+    console.log('\nPhase 3: commiting a Fix for issue #${bounty.issue_number}');
     const branchName = `fix-issue-${bounty.issue_number}-${new Date().getTime()}`;
     execSync(`git checkout -b ${branchName}`);
 
