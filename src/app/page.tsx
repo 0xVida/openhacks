@@ -203,9 +203,9 @@ function HomeContent() {
   return (
     <div className="flex flex-1 h-full overflow-hidden relative">
       <div
-        style={mounted ? { width: `${sidebarWidth}px` } : {}}
+        style={mounted ? { '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties : {}}
         className={`
-          w-full lg:w-[320px]
+          w-full lg:w-[var(--sidebar-width,320px)]
           ${showMobileDetail ? 'hidden lg:flex' : 'flex'} 
           ${isResizing ? '' : (mounted ? 'transition-[width] duration-300' : '')}
           flex-col border-r border-border-subtle bg-surface-low shrink-0 h-full relative group/sidebar
