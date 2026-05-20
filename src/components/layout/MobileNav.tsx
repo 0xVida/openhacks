@@ -13,7 +13,7 @@ export default function MobileNav() {
   const label = isExplore ? 'Dashboard' : 'Explore';
 
   return (
-    <div className="md:hidden fixed bottom-6 right-6 z-40 select-none">
+    <div className="md:hidden fixed bottom-6 right-6 z-30 select-none">
       <Link 
         href={targetHref}
         className="flex items-center justify-center gap-2 bg-accent text-white h-12 px-5 rounded-full shadow-lg shadow-accent/30 border border-accent/25 hover:scale-105 active:scale-95 transition-all font-black text-xs uppercase tracking-wider"
