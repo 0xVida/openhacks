@@ -15,6 +15,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           scope: "read:user user:email",
         },
       },
+      checks: ["state"],
       profile(profile) {
         return {
           id: profile.id.toString(),
