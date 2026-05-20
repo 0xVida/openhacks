@@ -81,7 +81,7 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
         </button>
 
         <div className="p-6 md:p-16 overflow-y-auto flex-1 mt-6">
-          {/* Step 1: Welcome */}
+          {/* 1. Welcome */}
           {step === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
               <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-accent flex items-center justify-center text-white mb-6 md:mb-8 shadow-xl shadow-accent/20">
@@ -117,7 +117,7 @@ export default function OnboardingModal({ onClose }: OnboardingModalProps) {
             </div>
           )}
 
-          {/* Step 2: API Key */}
+          {/* 2: API Key */}
           {step === 2 && (
             <div className="animate-in fade-in slide-in-from-right-8 duration-700">
               <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-surface-high flex items-center justify-center text-accent mb-6 md:mb-8 border border-border-subtle shadow-inner">
